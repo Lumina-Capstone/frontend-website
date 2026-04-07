@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { loginWithFirebaseToken, loginWithGoogle, setSession } from '../services/auth';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -8,7 +9,6 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Check if form is valid for enabling button
   const isFormValid = email.trim() !== '' && password.trim() !== '';
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,11 +18,16 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Replace with Firebase Auth
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { email: userEmail, uid, idToken } = await loginWithFirebaseToken(email, password);
+      setSession(userEmail, uid, idToken);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      let message = err.message || 'Login failed';
+      if (message.includes('EMAIL_NOT_FOUND')) message = 'Email tidak ditemukan.';
+      if (message.includes('INVALID_PASSWORD')) message = 'Password salah.';
+      if (message.includes('USER_DISABLED')) message = 'Akun dinonaktifkan.';
+      if (message.includes('Akses admin ditolak')) message = 'Email tidak terdaftar sebagai admin.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -32,10 +37,11 @@ export default function Login() {
     setIsLoading(true);
     setError('');
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { email: userEmail, uid, idToken } = await loginWithGoogle();
+      setSession(userEmail, uid, idToken);
       navigate('/dashboard');
     } catch (err: any) {
-      setError('Google sign-in failed. Please try again.');
+      setError(err.message || 'Google sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -43,11 +49,9 @@ export default function Login() {
 
   return (
     <div className="bg-white font-body min-h-screen flex">
-      {/* Left Side: Branding / System Description - simplified */}
       <section className="hidden md:flex flex-col justify-center w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 p-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-tr from-green-600/10 via-transparent to-transparent"></div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-green-500 rounded-full opacity-10 blur-3xl"></div>
-        
         <div className="relative z-10 max-w-lg">
           <h1 className="font-headline text-5xl font-bold text-white leading-tight tracking-tight mb-4">
             Digitizing farm records with <span className="text-green-400">OCR</span>
@@ -59,10 +63,9 @@ export default function Login() {
         </div>
       </section>
 
-      {/* Right Side: Login Form */}
+      {/* Right side: login form */}
       <section className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
-          {/* Back to home link - refined */}
           <div className="mb-4">
             <Link
               to="/"
@@ -79,19 +82,15 @@ export default function Login() {
             <h2 className="font-headline text-3xl font-bold text-gray-900 tracking-tight mb-2">
               Login to Lumina
             </h2>
-            <p className="text-gray-500 text-sm">
-              Access your digital records
-            </p>
+            <p className="text-gray-500 text-sm">Access your digital records</p>
           </div>
 
-          {/* Error Alert */}
           {error && (
             <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
               {error}
             </div>
           )}
 
-          {/* Google Sign-In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
@@ -115,7 +114,6 @@ export default function Login() {
             </span>
           </div>
 
-          {/* Email/Password Form */}
           <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-1">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -137,10 +135,7 @@ export default function Login() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-green-600 hover:text-green-700 font-medium transition"
-                >
+                <Link to="/forgot-password" className="text-xs text-green-600 hover:text-green-700 font-medium transition">
                   Forgot password?
                 </Link>
               </div>

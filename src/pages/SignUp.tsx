@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { signUpWithEmail, loginWithGoogle, setSession } from '../services/auth';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -15,15 +16,15 @@ export default function SignUp() {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    general?: string;
   }>({});
 
-  // Check if form is valid for enabling button
   const isFormValid =
     fullName.trim() !== '' &&
     email.trim() !== '' &&
     password.trim() !== '' &&
     confirmPassword.trim() !== '' &&
-    Object.keys(errors).length === 0;
+    Object.keys(errors).filter(e => e !== 'general').length === 0;
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -60,13 +61,19 @@ export default function SignUp() {
     e.preventDefault();
     if (!validateForm()) return;
     setIsLoading(true);
+    setErrors({});
 
     try {
-      // Replace with Firebase Auth
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      navigate('/dashboard');
+      await signUpWithEmail(email, password);
+      navigate('/login');
     } catch (err: any) {
-      setErrors({ email: err.message || 'Registration failed. Please try again.' });
+      let message = err.message;
+      if (message.includes('email-already-in-use')) {
+        message = 'Email already registered. Please login.';
+      } else if (message.includes('weak-password')) {
+        message = 'Password is too weak. Use at least 6 characters.';
+      }
+      setErrors({ general: message });
     } finally {
       setIsLoading(false);
     }
@@ -74,11 +81,13 @@ export default function SignUp() {
 
   const handleGoogleSignUp = async () => {
     setIsLoading(true);
+    setErrors({});
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { email: userEmail, uid, idToken } = await loginWithGoogle();
+      setSession(userEmail, uid, idToken);
       navigate('/dashboard');
     } catch (err: any) {
-      setErrors({ email: 'Google sign-up failed. Please try again.' });
+      setErrors({ general: err.message || 'Google sign-up failed. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -86,11 +95,9 @@ export default function SignUp() {
 
   return (
     <div className="bg-white font-body min-h-screen flex">
-      {/* Left Side: Branding - improved vertical spacing */}
       <section className="hidden md:flex flex-col justify-center w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 p-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-tr from-green-600/10 via-transparent to-transparent"></div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-green-500 rounded-full opacity-10 blur-3xl"></div>
-        
         <div className="relative z-10 max-w-lg -mt-8">
           <h1 className="font-headline text-5xl font-bold text-white leading-tight tracking-tight mb-4">
             Start digitizing your <span className="text-green-400">farm records</span>
@@ -101,10 +108,9 @@ export default function SignUp() {
         </div>
       </section>
 
-      {/* Right Side: Sign Up Form */}
+      {/* Right side: sign-up form */}
       <section className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
-          {/* Back to home link */}
           <div className="mb-4">
             <Link
               to="/"
@@ -121,12 +127,15 @@ export default function SignUp() {
             <h2 className="font-headline text-3xl font-bold text-gray-900 tracking-tight mb-2">
               Create your Lumina account
             </h2>
-            <p className="text-gray-500 text-sm">
-              Start managing your digital records
-            </p>
+            <p className="text-gray-500 text-sm">Start managing your digital records</p>
           </div>
 
-          {/* Google Sign-Up */}
+          {errors.general && (
+            <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {errors.general}
+            </div>
+          )}
+
           <button
             onClick={handleGoogleSignUp}
             disabled={isLoading}
@@ -141,7 +150,6 @@ export default function SignUp() {
             <span>{isLoading ? 'Signing up...' : 'Sign up with Google'}</span>
           </button>
 
-          {/* Divider - reduced prominence */}
           <div className="relative flex items-center justify-center my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-100"></div>
@@ -151,9 +159,7 @@ export default function SignUp() {
             </span>
           </div>
 
-          {/* Sign Up Form */}
           <form className="space-y-5" onSubmit={handleSignUp}>
-            {/* Full Name */}
             <div className="space-y-1">
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
                 Full Name
@@ -163,16 +169,13 @@ export default function SignUp() {
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                onBlur={() => validateForm()}
+                onBlur={validateForm}
                 placeholder="John Farmer"
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
               />
-              {errors.fullName && (
-                <p className="text-xs text-red-600 mt-1">{errors.fullName}</p>
-              )}
+              {errors.fullName && <p className="text-xs text-red-600 mt-1">{errors.fullName}</p>}
             </div>
 
-            {/* Email */}
             <div className="space-y-1">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -182,16 +185,13 @@ export default function SignUp() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => validateForm()}
+                onBlur={validateForm}
                 placeholder="farmer@example.com"
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
               />
-              {errors.email && (
-                <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
             </div>
 
-            {/* Password with visibility toggle - icon size 18px */}
             <div className="space-y-1">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -202,7 +202,7 @@ export default function SignUp() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onBlur={() => validateForm()}
+                  onBlur={validateForm}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400 pr-12"
                 />
@@ -216,12 +216,9 @@ export default function SignUp() {
                   </span>
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-xs text-red-600 mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
             </div>
 
-            {/* Confirm Password with visibility toggle - icon size 18px */}
             <div className="space-y-1">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
@@ -232,7 +229,7 @@ export default function SignUp() {
                   id="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  onBlur={() => validateForm()}
+                  onBlur={validateForm}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400 pr-12"
                 />
@@ -246,12 +243,9 @@ export default function SignUp() {
                   </span>
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>
-              )}
+              {errors.confirmPassword && <p className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>}
             </div>
 
-            {/* Create Account Button - polished states */}
             <button
               type="submit"
               disabled={isLoading || !isFormValid}
