@@ -1,122 +1,179 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Check if form is valid for enabling button
+  const isFormValid = email.trim() !== '' && password.trim() !== '';
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    if (!isFormValid) return;
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Replace with Firebase Auth
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError('Google sign-in failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="bg-background font-body text-on-background overflow-hidden h-screen flex">
-      {/* Left Side: Editorial Authority / Brand Side */}
-      <section className="hidden md:flex flex-col justify-between w-1/2 bg-on-surface p-24 relative overflow-hidden">
-        {/* Background Prism Aesthetic */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary rounded-full opacity-10 blur-3xl"></div>
-        <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary-container rounded-full opacity-5 blur-3xl"></div>
-        <div className="z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-container flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined text-on-primary-fixed">lightbulb</span>
-            </div>
-            <span className="font-headline text-3xl font-extrabold tracking-tighter text-white">Lumina</span>
-          </div>
-        </div>
-        <div className="z-10 max-w-lg">
-          <h1 className="font-headline text-display-lg text-6xl font-extrabold text-white leading-tight tracking-tighter">
-            Illuminating the <span className="text-primary-container">Next Generation</span> of Digital Strategy.
+    <div className="bg-white font-body min-h-screen flex">
+      {/* Left Side: Branding / System Description - simplified */}
+      <section className="hidden md:flex flex-col justify-center w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 p-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-green-600/10 via-transparent to-transparent"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-green-500 rounded-full opacity-10 blur-3xl"></div>
+        
+        <div className="relative z-10 max-w-lg">
+          <h1 className="font-headline text-5xl font-bold text-white leading-tight tracking-tight mb-4">
+            Digitizing farm records with <span className="text-green-400">OCR</span>
           </h1>
-          <p className="mt-8 text-surface-variant text-lg font-light leading-relaxed max-w-sm">
-            Access our premium tech ecosystem designed for architectural precision and atmospheric warmth.
+          <p className="text-gray-300 text-lg leading-relaxed">
+            Convert handwritten records into structured data.<br />
+            Track production and expenses in one place.
           </p>
         </div>
-        <div className="z-10 flex gap-4">
-          <div className="w-1 h-1 rounded-full bg-secondary"></div>
-          <div className="w-1 h-1 rounded-full bg-secondary-container opacity-50"></div>
-          <div className="w-1 h-1 rounded-full bg-primary-container opacity-25"></div>
-        </div>
       </section>
 
-      {/* Right Side: Interaction / Login Side */}
-      <section className="w-full md:w-1/2 flex items-center justify-center p-8 bg-surface prism-bg relative">
-        <div className="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-[0_32px_64px_-15px_rgba(25,28,30,0.06)] p-12 border border-outline-variant/10">
-          <header className="mb-10 text-center md:text-left">
-            <h2 className="font-headline text-3xl font-extrabold text-on-surface tracking-tight mb-2">Welcome Back</h2>
-            <p className="text-on-surface-variant text-sm">Enter your credentials to access the Atheneum.</p>
-          </header>
+      {/* Right Side: Login Form */}
+      <section className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md">
+          {/* Back to home link - refined */}
+          <div className="mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 py-1.5 px-2 -ml-2 text-gray-500 hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 rounded-md"
+            >
+              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}>
+                arrow_back
+              </span>
+              <span className="text-sm">Back to home</span>
+            </Link>
+          </div>
 
-          <div className="space-y-6">
-            {/* Social Login */}
-            <button className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-outline-variant/30 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-all duration-300 font-medium text-on-surface-variant">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0yjUiDzORa78p41DJwHn3hja3CsMLsFlNdg68PjSWEddFkHDR4WD50B7kCRM2vrWjArAFqgma2ChfRFYW5_0uVWdz99B-dfSrXm1eXQ4u4WVnRMiSIvIIpjR7nHnXatjvpm6vkRTo3xpBKsg0X2n9FZp5zi9YA-MrosUzcK6f8ELMat8KsoRLko9b4qwt2gycMyphBOx4vPTQ5DXtxlUCJMk7wOi9sarhU1_lIw8W8ASzUYMLqehlFog9UpIJOfwbcVOMD3kwXBE"
-                alt="Google"
-                data-alt="clean minimal google logo icon on white background"
-                className="w-5 h-5"
+          <div className="mb-8 text-center md:text-left">
+            <h2 className="font-headline text-3xl font-bold text-gray-900 tracking-tight mb-2">
+              Login to Lumina
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Access your digital records
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Google Sign-In */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 font-medium text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+            <span>{isLoading ? 'Signing in...' : 'Sign in with Google'}</span>
+          </button>
+
+          <div className="relative flex items-center justify-center my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <span className="relative px-4 bg-white text-xs uppercase tracking-wider text-gray-400 font-medium">
+              Or continue with email
+            </span>
+          </div>
+
+          {/* Email/Password Form */}
+          <form className="space-y-5" onSubmit={handleLogin}>
+            <div className="space-y-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="farmer@example.com"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
               />
-              <span>Sign in with Google</span>
-            </button>
-
-            <div className="relative flex items-center justify-center py-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-outline-variant/20"></div>
-              </div>
-              <span className="relative px-4 bg-surface-container-lowest text-xs uppercase tracking-widest text-on-surface-variant/60 font-medium">Or continue with email</span>
             </div>
 
-            <form className="space-y-5" onSubmit={handleLogin}>
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  placeholder="name@lumina.tech"
-                  className="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-1 focus:ring-secondary/50 focus:bg-surface-container-lowest transition-all duration-200 outline-none text-on-surface placeholder:text-on-surface-variant/40"
-                />
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-green-600 hover:text-green-700 font-medium transition"
+                >
+                  Forgot password?
+                </Link>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Password</label>
-                  <a href="#" className="text-xs font-medium text-secondary hover:text-secondary-fixed-dim transition-colors">Forgot?</a>
-                </div>
-                <input
-                  type="password"
-                  id="password"
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-1 focus:ring-secondary/50 focus:bg-surface-container-lowest transition-all duration-200 outline-none text-on-surface placeholder:text-on-surface-variant/40"
-                />
-              </div>
-              <button type="submit" className="w-full bg-primary-container text-on-primary-fixed py-4 rounded-lg font-bold text-sm tracking-tight hover:brightness-105 active:scale-[0.98] transition-all shadow-[0_8px_20px_-4px_rgba(197,216,45,0.4)]">
-                Sign In to Lumina
-              </button>
-            </form>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
 
-            <footer className="text-center pt-4">
-              <p className="text-on-surface-variant text-sm">
-                Don't have an account?
-                <Link to="/signup" className="font-bold text-on-surface hover:text-primary transition-colors ml-1">Create Account</Link>
-              </p>
-            </footer>
-          </div>
-        </div>
+            <button
+              type="submit"
+              disabled={isLoading || !isFormValid}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            >
+              {isLoading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
 
-        {/* Signature Component: Prismatic Node */}
-        <div className="absolute bottom-12 right-12 flex gap-2">
-          <div className="w-1.5 h-1.5 bg-secondary-container rounded-full"></div>
-          <div className="w-1.5 h-1.5 bg-primary-container rounded-full opacity-30"></div>
+          <footer className="text-center mt-8">
+            <p className="text-sm text-gray-500">
+              Don't have an account?{' '}
+              <Link to="/signup" className="font-semibold text-green-600 hover:text-green-700 transition">
+                Create account
+              </Link>
+            </p>
+          </footer>
         </div>
       </section>
-
-      {/* Global Footer */}
-      <footer className="fixed bottom-0 left-0 w-full z-40 bg-transparent flex flex-col md:flex-row justify-between items-center px-8 py-6 opacity-60 hover:opacity-100 transition-opacity">
-        <span className="text-xs uppercase tracking-widest text-on-surface-variant">© 2024 Lumina Tech. All rights reserved.</span>
-        <div className="flex gap-8 mt-4 md:mt-0">
-          <a href="#" className="text-xs uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-colors">Privacy Policy</a>
-          <a href="#" className="text-xs uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-colors">Terms of Service</a>
-          <a href="#" className="text-xs uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-colors">Contact</a>
-        </div>
-      </footer>
     </div>
   );
 }
