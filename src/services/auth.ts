@@ -5,6 +5,9 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type User,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -16,73 +19,39 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-if (!firebaseConfig.apiKey) {
-  console.error('Firebase config missing. Check your .env file.');
-}
-
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-const API_BASE = 'https://backend-production-b816.up.railway.app';
-
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Request failed: ${response.status}`);
-  }
-  return response.json();
-}
-
-export async function loginWithFirebaseToken(email: string, password: string) {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const idToken = await userCredential.user.getIdToken();
-  const data = await apiRequest<{ email: string; uid: string; message: string }>(
-    '/login',
-    {
-      method: 'POST',
-      body: JSON.stringify({ id_token: idToken }),
-    }
-  );
-  return { ...data, idToken };
-}
-
-export async function loginWithGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
-  const idToken = await result.user.getIdToken();
-  const data = await apiRequest<{ email: string; uid: string; message: string }>(
-    '/login',
-    {
-      method: 'POST',
-      body: JSON.stringify({ id_token: idToken }),
-    }
-  );
-  return { ...data, idToken };
-}
-
 export async function signUpWithEmail(email: string, password: string) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const idToken = await userCredential.user.getIdToken();
-  return { user: userCredential.user, idToken };
+  return userCredential.user;
 }
 
-export async function logout(idToken: string) {
-  await apiRequest('/logout', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${idToken}`,
-    },
-  });
-  await auth.signOut();
+export async function signInWithEmail(email: string, password: string) {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  return userCredential.user;
 }
 
-export function setSession(email: string, uid: string, idToken?: string) {
-  localStorage.setItem('lumina_user', JSON.stringify({ email, uid, idToken }));
+export async function signInWithGoogle() {
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+}
+
+export async function logout() {
+  await signOut(auth);
+}
+
+export function setSession(user: User) {
+  localStorage.setItem(
+    'lumina_user',
+    JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+    })
+  );
 }
 
 export function getSession() {
@@ -92,4 +61,8 @@ export function getSession() {
 
 export function clearSession() {
   localStorage.removeItem('lumina_user');
+}
+
+export function onAuthChange(callback: (user: User | null) => void) {
+  return onAuthStateChanged(auth, callback);
 }

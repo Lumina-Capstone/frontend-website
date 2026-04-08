@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { signUpWithEmail, loginWithGoogle, setSession } from '../services/auth';
+import { signUpWithEmail, signInWithGoogle, setSession } from '../services/auth';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -8,8 +8,7 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // controls both fields
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     fullName?: string;
@@ -18,13 +17,6 @@ export default function SignUp() {
     confirmPassword?: string;
     general?: string;
   }>({});
-
-  const isFormValid =
-    fullName.trim() !== '' &&
-    email.trim() !== '' &&
-    password.trim() !== '' &&
-    confirmPassword.trim() !== '' &&
-    Object.keys(errors).filter(e => e !== 'general').length === 0;
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -54,8 +46,18 @@ export default function SignUp() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).filter(k => k !== 'general').length === 0;
   };
+
+  const isFormValid =
+    fullName.trim() !== '' &&
+    email.trim() !== '' &&
+    password.trim() !== '' &&
+    confirmPassword.trim() !== '' &&
+    !errors.fullName &&
+    !errors.email &&
+    !errors.password &&
+    !errors.confirmPassword;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,14 +67,13 @@ export default function SignUp() {
 
     try {
       await signUpWithEmail(email, password);
+      // Don't set session or auto-login – user must go to login page
       navigate('/login');
     } catch (err: any) {
       let message = err.message;
-      if (message.includes('email-already-in-use')) {
-        message = 'Email already registered. Please login.';
-      } else if (message.includes('weak-password')) {
-        message = 'Password is too weak. Use at least 6 characters.';
-      }
+      if (message.includes('auth/email-already-in-use')) message = 'Email sudah terdaftar. Silakan login.';
+      else if (message.includes('auth/weak-password')) message = 'Password terlalu lemah. Minimal 6 karakter.';
+      else message = 'Pendaftaran gagal. Coba lagi.';
       setErrors({ general: message });
     } finally {
       setIsLoading(false);
@@ -83,11 +84,11 @@ export default function SignUp() {
     setIsLoading(true);
     setErrors({});
     try {
-      const { email: userEmail, uid, idToken } = await loginWithGoogle();
-      setSession(userEmail, uid, idToken);
-      navigate('/dashboard');
+      const user = await signInWithGoogle();
+      setSession(user);
+      navigate('/login');
     } catch (err: any) {
-      setErrors({ general: err.message || 'Google sign-up failed. Please try again.' });
+      setErrors({ general: err.message || 'Google sign-up failed.' });
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +109,6 @@ export default function SignUp() {
         </div>
       </section>
 
-      {/* Right side: sign-up form */}
       <section className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           <div className="mb-4">
@@ -116,7 +116,10 @@ export default function SignUp() {
               to="/"
               className="inline-flex items-center gap-2 py-1.5 px-2 -ml-2 text-gray-500 hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 rounded-md"
             >
-              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}>
+              <span
+                className="material-symbols-outlined text-base"
+                style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}
+              >
                 arrow_back
               </span>
               <span className="text-sm">Back to home</span>
@@ -204,16 +207,13 @@ export default function SignUp() {
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={validateForm}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400 pr-12"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
@@ -223,26 +223,15 @@ export default function SignUp() {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onBlur={validateForm}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">
-                    {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                  </span>
-                </button>
-              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onBlur={validateForm}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 outline-none text-gray-900 placeholder:text-gray-400"
+              />
               {errors.confirmPassword && <p className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>}
             </div>
 

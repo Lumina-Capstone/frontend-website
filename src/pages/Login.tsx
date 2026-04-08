@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { loginWithFirebaseToken, loginWithGoogle, setSession } from '../services/auth';
+import { signInWithEmail, signInWithGoogle, setSession } from '../services/auth';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,15 +18,16 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { email: userEmail, uid, idToken } = await loginWithFirebaseToken(email, password);
-      setSession(userEmail, uid, idToken);
+      const user = await signInWithEmail(email, password);
+      setSession(user);
       navigate('/dashboard');
     } catch (err: any) {
-      let message = err.message || 'Login failed';
-      if (message.includes('EMAIL_NOT_FOUND')) message = 'Email tidak ditemukan.';
-      if (message.includes('INVALID_PASSWORD')) message = 'Password salah.';
-      if (message.includes('USER_DISABLED')) message = 'Akun dinonaktifkan.';
-      if (message.includes('Akses admin ditolak')) message = 'Email tidak terdaftar sebagai admin.';
+      let message = err.message;
+      if (message.includes('auth/user-not-found')) message = 'Email tidak ditemukan.';
+      else if (message.includes('auth/wrong-password')) message = 'Password salah.';
+      else if (message.includes('auth/invalid-email')) message = 'Email tidak valid.';
+      else if (message.includes('auth/too-many-requests')) message = 'Terlalu banyak percobaan. Coba lagi nanti.';
+      else message = 'Login gagal. Periksa email dan password.';
       setError(message);
     } finally {
       setIsLoading(false);
@@ -37,11 +38,11 @@ export default function Login() {
     setIsLoading(true);
     setError('');
     try {
-      const { email: userEmail, uid, idToken } = await loginWithGoogle();
-      setSession(userEmail, uid, idToken);
+      const user = await signInWithGoogle();
+      setSession(user);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Google sign-in failed. Please try again.');
+      setError(err.message || 'Google sign-in failed.');
     } finally {
       setIsLoading(false);
     }

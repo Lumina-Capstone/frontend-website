@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { logout, getSession, clearSession } from '../services/auth';
+import { logout, getSession, clearSession, onAuthChange } from '../services/auth';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -14,20 +14,27 @@ export default function DashboardLayout() {
     } else {
       navigate('/login');
     }
+
+    const unsubscribe = onAuthChange((user) => {
+      if (!user) {
+        clearSession();
+        navigate('/login');
+      }
+    });
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    const session = getSession();
-    if (session?.idToken) {
-      try {
-        await logout(session.idToken);
-      } catch (err) {
-        console.error('Logout error:', err);
-      }
+    try {
+      await logout(); 
+      clearSession();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setIsLoggingOut(false);
     }
-    clearSession();
-    navigate('/login');
   };
 
   const displayName = userEmail ? userEmail.split('@')[0] : 'User';
