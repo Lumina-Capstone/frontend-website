@@ -1,229 +1,276 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
+
+const mockProductions = [
+  { id: '1', date: '2026-04-01', count: 1240 },
+  { id: '2', date: '2026-04-02', count: 1320 },
+  { id: '3', date: '2026-04-03', count: 1280 },
+  { id: '4', date: '2026-04-04', count: 1450 },
+  { id: '5', date: '2026-04-05', count: 1520 },
+  { id: '6', date: '2026-04-06', count: 1380 },
+  { id: '7', date: '2026-04-07', count: 1410 },
+  { id: '8', date: '2026-04-08', count: 1490 },
+];
+
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const total = mockProductions.reduce((s, p) => s + p.count, 0);
+const today = new Date().toISOString().slice(0, 10);
+const todayCount = mockProductions.find(p => p.date === today)?.count || 0;
+const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const yesterdayCount = mockProductions.find(p => p.date === yesterday)?.count || 0;
+const dailyChange = yesterdayCount ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 : 0;
+const avg = Math.round(total / mockProductions.length);
+const maxEntry = mockProductions.reduce((max, p) => (p.count > max.count ? p : max), mockProductions[0]);
+
+const now = new Date();
+const last7 = mockProductions.filter(p => {
+  const diff = (now.getTime() - new Date(p.date).getTime()) / (1000 * 3600 * 24);
+  return diff <= 7 && diff > 0;
+}).reduce((s, p) => s + p.count, 0);
+const prev7 = mockProductions.filter(p => {
+  const diff = (now.getTime() - new Date(p.date).getTime()) / (1000 * 3600 * 24);
+  return diff <= 14 && diff > 7;
+}).reduce((s, p) => s + p.count, 0);
+const weeklyGrowth = prev7 ? ((last7 - prev7) / prev7) * 100 : 0;
+
+const variance = mockProductions.reduce((sum, p) => sum + Math.pow(p.count - avg, 2), 0) / mockProductions.length;
+const consistency = variance < 100 ? 'Stable' : variance < 400 ? 'Moderate' : 'Fluctuating';
+
+const chartData = mockProductions.map(p => ({ date: formatDate(p.date), count: p.count, fullDate: p.date }));
 
 export default function Dashboard() {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newCount, setNewCount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleAddProduction = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCount || parseInt(newCount) <= 0) return;
+    setSubmitting(true);
+    setTimeout(() => {
+      alert('Demo: record added (UI only). Backend not connected.');
+      setSubmitting(false);
+      setNewCount('');
+      setIsAddModalOpen(false);
+    }, 500);
+  };
+
   return (
-    <div className="p-8 lg:p-12 relative flex-1">
-      {/* Header Section */}
-      <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <span className="text-secondary font-semibold text-xs tracking-widest uppercase mb-2 block">Financial Control</span>
-          <h2 className="text-4xl font-extrabold font-headline text-on-surface tracking-tight">Performance Hub</h2>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="px-6 py-2.5 bg-surface-container-low text-on-surface-variant font-semibold text-sm rounded-xl hover:bg-surface-container-high transition-all">
-            Generate Report
-          </button>
-          <button className="px-6 py-2.5 bg-primary-container text-on-primary-fixed font-bold text-sm rounded-xl shadow-lg shadow-primary-container/20 hover:opacity-90 transition-all flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">add</span>
-            New Entry
-          </button>
-        </div>
-      </header>
-
-      {/* Top Row: Summary Cards (Bento Style) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-        {/* Total Income */}
-        <div className="bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden group hover:bg-surface-bright transition-all duration-300">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-slate-500 font-medium text-xs uppercase tracking-wider">Total Income</span>
-              <div className="w-8 h-8 bg-secondary-container/30 rounded-lg flex items-center justify-center text-secondary">
-                <span className="material-symbols-outlined text-lg">trending_up</span>
-              </div>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-headline font-extrabold text-on-surface">$124,500</span>
-              <span className="text-secondary text-xs font-bold">+12%</span>
-            </div>
+    <div className="px-6 md:px-10 py-8 bg-gray-50 min-h-screen">
+      <div className="max-w-[1300px]">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Production Dashboard</h1>
+            <p className="text-gray-500 text-sm mt-1">Monitor daily egg output</p>
           </div>
-          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-secondary-container/5 rounded-full blur-2xl group-hover:bg-secondary-container/10 transition-all"></div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Add Production
+            </button>
+            <Link
+              to="/upload"
+              className="px-4 py-2 border border-gray-300 bg-white text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-base">document_scanner</span>
+              OCR Receipt
+            </Link>
+          </div>
         </div>
 
-        {/* Total Expense */}
-        <div className="bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden group hover:bg-surface-bright transition-all duration-300">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-slate-500 font-medium text-xs uppercase tracking-wider">Total Expense</span>
-              <div className="w-8 h-8 bg-error-container/30 rounded-lg flex items-center justify-center text-error">
-                <span className="material-symbols-outlined text-lg">trending_down</span>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          {/* Total Production */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">Total Production</span>
+              <span className="material-symbols-outlined text-gray-400 text-xl">egg</span>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-headline font-extrabold text-on-surface">$48,200</span>
-              <span className="text-error text-xs font-bold">-2.4%</span>
+            <div className="mt-3">
+              <span className="text-2xl font-bold tracking-tight text-gray-900">{total.toLocaleString()}</span>
+              <span className="text-sm text-gray-500 ml-1">eggs</span>
+            </div>
+            <div className="mt-1 text-xs text-gray-400">All time</div>
+          </div>
+
+          {/* Today's Production */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">Today</span>
+              <span className="material-symbols-outlined text-gray-400 text-xl">today</span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-gray-900">{todayCount.toLocaleString()}</span>
+              <span className={`text-xs ml-1.5 font-medium ${dailyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {dailyChange >= 0 ? `+${dailyChange.toFixed(1)}%` : `${dailyChange.toFixed(1)}%`}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">vs yesterday</p>
+          </div>
+
+          {/* Average Daily Output */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">Daily Avg</span>
+              <span className="material-symbols-outlined text-gray-400 text-xl">bar_chart</span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-gray-900">{avg.toLocaleString()}</span>
+              <span className="text-sm text-gray-500 ml-1">eggs/day</span>
             </div>
           </div>
-          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-error-container/5 rounded-full blur-2xl group-hover:bg-error-container/10 transition-all"></div>
+
+          {/* Peak Production */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">Peak</span>
+              <span className="material-symbols-outlined text-gray-400 text-xl">trending_up</span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-gray-900">{maxEntry.count.toLocaleString()}</span>
+              <p className="text-xs text-gray-400 mt-0.5">{formatDate(maxEntry.date)}</p>
+            </div>
+          </div>
         </div>
 
-        {/* Net Balance */}
-        <div className="bg-slate-900 p-8 rounded-xl relative overflow-hidden group transition-all duration-300">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-slate-400 font-medium text-xs uppercase tracking-wider">Net Balance</span>
-              <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-fixed">
-                <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          <div className="border-l-4 border-green-500 pl-4 py-1">
+            <div className="flex items-center gap-2 text-gray-600">
+              <span className="material-symbols-outlined text-green-600 text-lg">show_chart</span>
+              <span className="text-sm font-medium">Weekly Growth</span>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-headline font-extrabold text-white">$76,300</span>
-              <span className="text-primary-container text-xs font-bold">Stable</span>
+            <div className="mt-2">
+              <span className={`text-2xl font-bold ${weeklyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {weeklyGrowth >= 0 ? `+${weeklyGrowth.toFixed(1)}%` : `${weeklyGrowth.toFixed(1)}%`}
+              </span>
+              <p className="text-xs text-gray-500 mt-1">vs previous 7 days</p>
             </div>
           </div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/10 blur-3xl opacity-50"></div>
+          <div className="border-l-4 border-green-500 pl-4 py-1">
+            <div className="flex items-center gap-2 text-gray-600">
+              <span className="material-symbols-outlined text-green-600 text-lg">assessment</span>
+              <span className="text-sm font-medium">Consistency</span>
+            </div>
+            <div className="mt-2">
+              <span className={`text-2xl font-bold ${consistency === 'Stable' ? 'text-green-600' : consistency === 'Moderate' ? 'text-yellow-600' : 'text-red-600'}`}>
+                {consistency}
+              </span>
+              <p className="text-xs text-gray-500 mt-1">daily variance</p>
+            </div>
+          </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-12">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Production Trends</h3>
+            <p className="text-gray-500 text-xs">Last {chartData.length} days</p>
+          </div>
+          <ResponsiveContainer width="100%" height={420}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.3} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', padding: '6px 10px' }}
+                labelFormatter={(label, payload) => payload?.[0]?.payload.fullDate || label}
+                formatter={(value: number) => [`${value.toLocaleString()} eggs`, 'Production']}
+                cursor={{ stroke: '#22c55e', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Area type="monotone" dataKey="count" stroke="#22c55e" strokeWidth={2.5} fill="url(#colorCount)" dot={false} activeDot={{ r: 4, fill: '#22c55e', stroke: 'white', strokeWidth: 2 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+            <h3 className="font-medium text-gray-900">Recent entries</h3>
+            <Link to="/records" className="text-xs text-green-600 hover:text-green-700">View all →</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-xs font-medium">
+                <tr>
+                  <th className="px-5 py-3">Date</th>
+                  <th className="px-5 py-3">Eggs</th>
+                  <th className="px-5 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {mockProductions.slice(0, 8).map(prod => (
+                  <tr key={prod.id} className="hover:bg-gray-50 transition">
+                    <td className="px-5 py-3.5 text-sm text-gray-700">{new Date(prod.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-gray-900">{prod.count.toLocaleString()}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">Recorded</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Modal */}
+        {isAddModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Add Production Record</h3>
+                <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form onSubmit={handleAddProduction}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Date</label>
+                    <input
+                      type="date"
+                      defaultValue={new Date().toISOString().slice(0, 10)}
+                      disabled
+                      className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">(Demo – backend not connected)</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Egg Count</label>
+                    <input
+                      type="number"
+                      value={newCount}
+                      onChange={e => setNewCount(e.target.value)}
+                      required
+                      min="1"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                      placeholder="e.g., 1250"
+                    />
+                  </div>
+                </div>
+                <div className="mt-6 flex gap-3 justify-end">
+                  <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={submitting} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                    {submitting ? 'Saving...' : 'Save Record'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Middle Row: Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Weekly Trends Chart (Simulated) */}
-        <div className="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl hover:bg-surface-bright transition-all">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h3 className="text-lg font-bold font-headline">Weekly Revenue Trends</h3>
-              <p className="text-slate-400 text-xs">Performance data across last 7 business days</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="px-3 py-1 bg-surface-container-low text-[10px] font-bold uppercase rounded-full">Mon - Sun</span>
-            </div>
-          </div>
-          <div className="h-64 flex items-end justify-between gap-4 relative">
-            {/* Grid Lines */}
-            <div className="absolute inset-0 flex flex-col justify-between opacity-10">
-              <div className="border-t border-on-surface"></div>
-              <div className="border-t border-on-surface"></div>
-              <div className="border-t border-on-surface"></div>
-              <div className="border-t border-on-surface"></div>
-            </div>
-            {/* Chart Bars/Lines Simulation */}
-            <div className="flex-1 bg-secondary-container/20 hover:bg-secondary-container/40 transition-all h-[40%] rounded-t-lg relative group">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">12k</div>
-            </div>
-            <div className="flex-1 bg-secondary-container/20 hover:bg-secondary-container/40 transition-all h-[65%] rounded-t-lg relative group"></div>
-            <div className="flex-1 bg-secondary-container/40 hover:bg-secondary-container/60 transition-all h-[55%] rounded-t-lg relative group"></div>
-            <div className="flex-1 bg-secondary-container/20 hover:bg-secondary-container/40 transition-all h-[85%] rounded-t-lg relative group"></div>
-            <div className="flex-1 bg-secondary-container/60 hover:bg-secondary-container/80 transition-all h-[45%] rounded-t-lg relative group"></div>
-            <div className="flex-1 bg-primary-container h-[95%] rounded-t-lg relative group shadow-lg shadow-primary-container/20"></div>
-            <div className="flex-1 bg-secondary-container/30 hover:bg-secondary-container/50 transition-all h-[70%] rounded-t-lg relative group"></div>
-          </div>
-          <div className="flex justify-between mt-4 px-2 text-[10px] text-slate-400 font-bold">
-            <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
-          </div>
-        </div>
-
-        {/* Expense Distribution (Simulated Pie/Donut) */}
-        <div className="bg-surface-container-lowest p-8 rounded-xl hover:bg-surface-bright transition-all flex flex-col">
-          <div className="mb-8">
-            <h3 className="text-lg font-bold font-headline">Expense Ratio</h3>
-            <p className="text-slate-400 text-xs">Top spending categories this month</p>
-          </div>
-          <div className="flex-1 flex items-center justify-center relative">
-            {/* Donut Simulation */}
-            <div className="w-40 h-40 rounded-full border-[12px] border-slate-100 relative flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-[12px] border-secondary border-t-transparent border-r-transparent rotate-45"></div>
-              <div className="absolute inset-0 rounded-full border-[12px] border-primary-container border-l-transparent border-b-transparent border-r-transparent -rotate-12"></div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 block uppercase font-bold tracking-tighter">Total</span>
-                <span className="text-xl font-bold font-headline">100%</span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-3 mt-8">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                <span className="text-slate-600">Infrastructure</span>
-              </div>
-              <span className="font-bold">45%</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary-container"></div>
-                <span className="text-slate-600">Marketing</span>
-              </div>
-              <span className="font-bold">30%</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-slate-200"></div>
-                <span className="text-slate-600">Other</span>
-              </div>
-              <span className="font-bold">25%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row: Recent Activity */}
-      <section className="mt-8 bg-surface-container-lowest p-8 rounded-xl">
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-lg font-bold font-headline">Recent Transactions</h3>
-          <Link to="/records" className="text-xs font-bold text-secondary hover:underline transition-all">View Ledger</Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-50">
-                <th className="pb-4 font-bold">Details</th>
-                <th className="pb-4 font-bold">Category</th>
-                <th className="pb-4 font-bold">Date</th>
-                <th className="pb-4 font-bold text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              <tr className="group hover:bg-slate-50/50 transition-all">
-                <td className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm text-slate-500">cloud_queue</span>
-                    </div>
-                    <span className="text-sm font-semibold">AWS Cloud Services</span>
-                  </div>
-                </td>
-                <td className="py-4 text-xs text-slate-500">Technology</td>
-                <td className="py-4 text-xs text-slate-500">Oct 24, 2024</td>
-                <td className="py-4 text-sm font-bold text-right text-error">-$1,240.00</td>
-              </tr>
-              <tr className="group hover:bg-slate-50/50 transition-all">
-                <td className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm text-slate-500">payments</span>
-                    </div>
-                    <span className="text-sm font-semibold">Stripe Payout</span>
-                  </div>
-                </td>
-                <td className="py-4 text-xs text-slate-500">Revenue</td>
-                <td className="py-4 text-xs text-slate-500">Oct 23, 2024</td>
-                <td className="py-4 text-sm font-bold text-right text-secondary">+$14,500.00</td>
-              </tr>
-              <tr className="group hover:bg-slate-50/50 transition-all">
-                <td className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm text-slate-500">restaurant</span>
-                    </div>
-                    <span className="text-sm font-semibold">Corporate Lunch</span>
-                  </div>
-                </td>
-                <td className="py-4 text-xs text-slate-500">Entertainment</td>
-                <td className="py-4 text-xs text-slate-500">Oct 22, 2024</td>
-                <td className="py-4 text-sm font-bold text-right text-error">-$450.00</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Footer Component */}
-      <footer className="w-full flex flex-col md:flex-row justify-between items-center py-12 border-t border-slate-200/15 font-['Inter'] text-xs uppercase tracking-widest mt-12">
-        <p className="text-slate-500">© 2024 Lumina Tech. All rights reserved.</p>
-        <div className="flex gap-8 mt-4 md:mt-0">
-          <a href="#" className="text-slate-500 hover:text-lime-500 transition-colors">Privacy Policy</a>
-          <a href="#" className="text-slate-500 hover:text-lime-500 transition-colors">Terms of Service</a>
-          <a href="#" className="text-slate-500 hover:text-lime-500 transition-colors">Contact</a>
-        </div>
-      </footer>
     </div>
   );
 }
