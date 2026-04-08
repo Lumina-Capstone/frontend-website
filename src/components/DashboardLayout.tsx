@@ -1,11 +1,13 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { LayoutDashboard, Receipt, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { logout, getSession, clearSession, onAuthChange } from '../services/auth';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string>('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const session = getSession();
@@ -27,7 +29,7 @@ export default function DashboardLayout() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout(); 
+      await logout();
       clearSession();
       navigate('/login');
     } catch (err) {
@@ -40,87 +42,115 @@ export default function DashboardLayout() {
   const displayName = userEmail ? userEmail.split('@')[0] : 'User';
   const userInitial = displayName.charAt(0).toUpperCase();
 
-  return (
-    <div className="bg-surface font-body text-on-surface antialiased min-h-screen relative flex">
-      <div className="prism-node top-24 left-72 opacity-40"></div>
-      <div className="prism-node bottom-12 right-12 opacity-30"></div>
-      <div className="prism-node top-1/2 right-0 opacity-20"></div>
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+    { to: '/records', icon: Receipt, label: 'Records' },
+    { to: '/settings', icon: Settings, label: 'Settings' },
+  ];
 
-      <aside className="flex flex-col h-screen fixed left-0 top-0 z-40 bg-slate-900 dark:bg-black font-['Manrope'] text-sm font-medium w-64 shadow-2xl transition-transform duration-200 ease-in-out">
-        <div className="px-8 py-10">
-          <h1 className="text-xl font-black text-white tracking-tighter uppercase">Lumina</h1>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">Farm Record System</p>
+  const TooltipWrapper = ({ children, label, show }: { children: React.ReactNode; label: string; show: boolean }) => {
+    if (!show) return <>{children}</>;
+    return (
+      <div className="relative group">
+        {children}
+        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-50">
+          {label}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-gray-50 min-h-screen flex">
+      <aside
+        className={`flex flex-col h-screen fixed left-0 top-0 z-40 bg-[#0f172a] shadow-xl transition-all duration-200 ease-in-out ${
+          isCollapsed ? 'w-[72px]' : 'w-[240px]'
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 h-16 border-b border-white/10">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <img src="/Logo.png" alt="Lumina" className="h-7 w-auto" />
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="w-full flex justify-center">
+              <img src="/Logo.png" alt="Lumina" className="h-7 w-auto" />
+            </div>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2">
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-                isActive
-                  ? 'text-teal-400 border-r-4 border-teal-400 bg-slate-800/50'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-              }`
-            }
-          >
-            <span className="material-symbols-outlined text-lg">dashboard</span>
-            <span>Overview</span>
-          </NavLink>
-
-          <NavLink
-            to="/records"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-                isActive
-                  ? 'text-teal-400 border-r-4 border-teal-400 bg-slate-800/50'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-              }`
-            }
-          >
-            <span className="material-symbols-outlined text-lg">receipt_long</span>
-            <span>Records</span>
-          </NavLink>
-
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-                isActive
-                  ? 'text-teal-400 border-r-4 border-teal-400 bg-slate-800/50'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-              }`
-            }
-          >
-            <span className="material-symbols-outlined text-lg">settings</span>
-            <span>Settings</span>
-          </NavLink>
+        <nav className="flex-1 px-3 py-6 space-y-1">
+          {navItems.map((item) => (
+            <TooltipWrapper key={item.to} label={item.label} show={isCollapsed}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-green-500/12 text-white'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  } ${isCollapsed ? 'justify-center' : ''}`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon
+                      size={18}
+                      strokeWidth={1.5}
+                      className={isActive ? 'text-green-500' : 'text-slate-400 group-hover:text-slate-300'}
+                    />
+                    {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                  </>
+                )}
+              </NavLink>
+            </TooltipWrapper>
+          ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-800/50 mt-auto">
-          <div className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl mb-4 border border-white/5">
-            {/* Avatar with initial instead of external image */}
-            <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm">
-              {userInitial}
+        <div className="px-3 pb-6 mt-auto space-y-3">
+          <TooltipWrapper label={displayName} show={isCollapsed}>
+            <div
+              className={`flex items-center gap-3 p-2 rounded-lg transition-all ${
+                isCollapsed ? 'justify-center' : ''
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
+                {userInitial}
+              </div>
+              {!isCollapsed && (
+                <p className="text-white text-sm font-semibold truncate">{displayName}</p>
+              )}
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-white text-xs font-bold truncate">{displayName}</p>
-              <p className="text-slate-500 text-[10px] truncate">{userEmail}</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all rounded-lg text-xs uppercase tracking-widest font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="material-symbols-outlined text-sm">logout</span>
-            <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-          </button>
+          </TooltipWrapper>
+
+          <TooltipWrapper label="Logout" show={isCollapsed}>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-300 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 ${
+                isCollapsed ? 'justify-center' : ''
+              }`}
+            >
+              <LogOut size={18} strokeWidth={1.5} />
+              {!isCollapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
+            </button>
+          </TooltipWrapper>
         </div>
       </aside>
 
-      {/* Main Content Canvas */}
-      <main className="ml-64 flex-1 w-full min-h-screen relative overflow-hidden flex flex-col">
-        <div className="flex-1 w-full flex flex-col">
+      <main
+        className={`flex-1 min-h-screen bg-gray-50 overflow-auto transition-all duration-200 ${
+          isCollapsed ? 'ml-[72px]' : 'ml-[240px]'
+        }`}
+      >
+        <div className="p-0">
           <Outlet />
         </div>
       </main>
