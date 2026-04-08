@@ -188,7 +188,10 @@ export default function Dashboard() {
               <Tooltip
                 contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', padding: '6px 10px' }}
                 labelFormatter={(label, payload) => payload?.[0]?.payload.fullDate || label}
-                formatter={(value: number) => [`${value.toLocaleString()} eggs`, 'Production']}
+                formatter={(value: any) => {
+                  if (typeof value !== 'number') return ['0 eggs', 'Production'];
+                  return [`${value.toLocaleString()} eggs`, 'Production'];
+                }}
                 cursor={{ stroke: '#22c55e', strokeWidth: 1, strokeDasharray: '4 4' }}
               />
               <Area type="monotone" dataKey="count" stroke="#22c55e" strokeWidth={2.5} fill="url(#colorCount)" dot={false} activeDot={{ r: 4, fill: '#22c55e', stroke: 'white', strokeWidth: 2 }} />
