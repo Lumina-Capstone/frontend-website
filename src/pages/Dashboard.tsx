@@ -1,26 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-
-const mockProductions = [
-  { id: '1', date: '2026-04-01', count: 1240 },
-  { id: '2', date: '2026-04-02', count: 1320 },
-  { id: '3', date: '2026-04-03', count: 1280 },
-  { id: '4', date: '2026-04-04', count: 1450 },
-  { id: '5', date: '2026-04-05', count: 1520 },
-  { id: '6', date: '2026-04-06', count: 1380 },
-  { id: '7', date: '2026-04-07', count: 1410 },
-  { id: '8', date: '2026-04-08', count: 1490 },
-];
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Azure Backend URL (Without /api, to match your FastAPI setup)
 const API_BASE_URL = 'https://lumina-backend-e7cjgdhte6hdg9by.southeastasia-01.azurewebsites.net';
 
 export default function Dashboard() {
@@ -28,46 +16,51 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
   const [newCount, setNewCount] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // 1. Fetch data from Azure Backend
-  useEffect(() => {
-    const fetchProductions = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/produksi`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        
-        // Use backend data if available, otherwise fallback to mock data
-        if (data && data.length > 0) {
-          setProductions(data);
-        } else {
-          setProductions(mockProductions);
-        }
-      } catch (error) {
-        console.error("Failed to fetch from backend, using fallback data:", error);
-        setProductions(mockProductions);
-      } finally {
-        setIsLoading(false);
+  const fetchProductions = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/produksi`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.produksis)) {
+        setProductions(data.produksis);
+      } else if (Array.isArray(data)) {
+        setProductions(data);
+      } else {
+        setProductions([]); 
       }
-    };
-
-    fetchProductions();
+    } catch (error) {
+      console.error("Failed to fetch from backend:", error);
+      setProductions([]); 
+    } finally {
+      if (showSpinner) setIsLoading(false);
+    }
   }, []);
 
-  // 2. Dynamically calculate stats based on fetched data (WITH SAFETY CHECKS)
+  useEffect(() => {
+    fetchProductions(true);
+  }, [fetchProductions]);
+
   const stats = useMemo(() => {
-    if (!productions.length) return null;
+    if (!productions || productions.length === 0) {
+      return {
+        total: 0, todayCount: 0, dailyChange: 0, avg: 0, 
+        maxEntry: { count: 0, date: null }, weeklyGrowth: 0, 
+        consistency: 'N/A', chartData: []
+      };
+    }
 
     const total = productions.reduce((s, p) => s + (p.count || 0), 0);
     const today = new Date().toISOString().slice(0, 10);
     
-    // ADDED SAFETY CHECK: p.date ? p.date.startsWith(...) : false
     const todayCount = productions.find(p => p.date ? p.date.startsWith(today) : false)?.count || 0;
     
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    // ADDED SAFETY CHECK: p.date ? p.date.startsWith(...) : false
     const yesterdayCount = productions.find(p => p.date ? p.date.startsWith(yesterday) : false)?.count || 0;
     const dailyChange = yesterdayCount ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 : 0;
     
@@ -76,13 +69,13 @@ export default function Dashboard() {
 
     const now = new Date();
     const last7 = productions.filter(p => {
-      if (!p.date) return false; // Safety check
+      if (!p.date) return false;
       const diff = (now.getTime() - new Date(p.date).getTime()) / (1000 * 3600 * 24);
       return diff <= 7 && diff >= 0;
     }).reduce((s, p) => s + (p.count || 0), 0);
     
     const prev7 = productions.filter(p => {
-      if (!p.date) return false; // Safety check
+      if (!p.date) return false;
       const diff = (now.getTime() - new Date(p.date).getTime()) / (1000 * 3600 * 24);
       return diff <= 14 && diff > 7;
     }).reduce((s, p) => s + (p.count || 0), 0);
@@ -93,21 +86,20 @@ export default function Dashboard() {
     const consistency = variance < 5000 ? 'Stable' : variance < 15000 ? 'Moderate' : 'Fluctuating';
 
     const chartData = productions
-      .filter(p => p.date) // Remove any records with no date before sorting
+      .filter(p => p.date)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map(p => ({ date: formatDate(p.date), count: p.count || 0, fullDate: p.date }));
 
     return { total, todayCount, dailyChange, avg, maxEntry, weeklyGrowth, consistency, chartData };
   }, [productions]);
 
-  // 3. Post new record to Azure Backend
   const handleAddProduction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCount || parseInt(newCount) <= 0) return;
     setSubmitting(true);
     
     const newRecord = {
-      date: new Date().toISOString().slice(0, 10), // Adjust based on your backend schema
+      date: newDate, 
       count: parseInt(newCount)
     };
 
@@ -120,11 +112,10 @@ export default function Dashboard() {
 
       if (!response.ok) throw new Error('Failed to save record');
       
-      const savedRecord = await response.json();
-      // Update local state with the newly saved record
-      setProductions(prev => [...prev, savedRecord]);
+      await fetchProductions(false); 
       
       setNewCount('');
+      setNewDate(new Date().toISOString().slice(0, 10)); 
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error saving record:", error);
@@ -146,7 +137,6 @@ export default function Dashboard() {
     <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
       <div className="max-w-[1300px] mx-auto">
         
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <h1 className="font-['Manrope',sans-serif] text-3xl md:text-4xl font-bold tracking-tight text-[#0B1A13]">Production Dashboard</h1>
@@ -170,7 +160,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           
           <div className="bg-white rounded-3xl border border-[#E8F2EC] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-transform duration-300">
@@ -223,7 +212,6 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Middle Insights Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="bg-white rounded-3xl border border-[#E8F2EC] p-6 shadow-sm flex items-center gap-6">
             <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0">
@@ -256,73 +244,86 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Main Chart */}
         <div className="bg-white rounded-3xl border border-[#E8F2EC] p-6 md:p-8 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="mb-6">
             <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13]">Production Trends</h3>
             <p className="text-[#7D8F85] text-sm font-medium mt-1">Last {stats.chartData.length} days</p>
           </div>
           <div className="h-[420px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8F2EC" vertical={false} opacity={0.6} />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} axisLine={false} tickLine={false} dy={10} />
-                <YAxis tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} axisLine={false} tickLine={false} dx={-10} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#11241A', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '10px 14px', color: '#fff' }}
-                  itemStyle={{ color: '#fff', fontWeight: 'bold' }}
-                  labelStyle={{ color: '#C3D9CE', fontSize: '12px', marginBottom: '4px' }}
-                  labelFormatter={(label, payload) => payload?.[0]?.payload.fullDate || label}
-                  formatter={(value: any) => [`${value.toLocaleString()} units`, 'Output']}
-                  cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
-                />
-                <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fill="url(#colorCount)" dot={false} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 3 }} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {stats.chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8F2EC" vertical={false} opacity={0.6} />
+                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} axisLine={false} tickLine={false} dx={-10} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#11241A', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '10px 14px', color: '#fff' }}
+                    itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#C3D9CE', fontSize: '12px', marginBottom: '4px' }}
+                    labelFormatter={(label, payload) => payload?.[0]?.payload.fullDate || label}
+                    formatter={(value: any) => [`${value.toLocaleString()} units`, 'Output']}
+                    cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  />
+                  <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fill="url(#colorCount)" dot={false} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 3 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-[#7D8F85] bg-[#FDFBF7]/50 rounded-2xl border border-dashed border-[#E8F2EC]">
+                <span className="material-symbols-outlined text-4xl mb-2 text-[#C3D9CE]">monitoring</span>
+                <p className="font-medium">No data available to chart.</p>
+                <p className="text-xs mt-1">Add a production record to see trends.</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Entries Table */}
         <div className="bg-white rounded-3xl border border-[#E8F2EC] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="px-6 py-5 border-b border-[#E8F2EC] flex justify-between items-center bg-[#FDFBF7]/50">
             <h3 className="font-['Manrope',sans-serif] text-lg font-bold text-[#0B1A13]">Recent Entries</h3>
-            <Link to="/records" className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View all →</Link>
+            {productions.length > 0 && (
+              <Link to="/records" className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View all →</Link>
+            )}
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-white text-[#7D8F85] text-xs font-bold uppercase tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 border-b border-[#E8F2EC]">Date</th>
-                  <th className="px-6 py-4 border-b border-[#E8F2EC]">Output</th>
-                  <th className="px-6 py-4 border-b border-[#E8F2EC]">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E8F2EC] bg-white">
-                {/* Reversing to show newest first if dates are sorted ascending initially */}
-                {[...productions].filter(p => p.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map((prod, index) => (
-                  <tr key={prod.id || index} className="hover:bg-[#FDFBF7] transition-colors group">
-                    <td className="px-6 py-4 text-sm text-[#4A5D52] font-medium">{new Date(prod.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-[#0B1A13]">{prod.count?.toLocaleString() || 0}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                        Recorded
-                      </span>
-                    </td>
+            {productions.length > 0 ? (
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-white text-[#7D8F85] text-xs font-bold uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 border-b border-[#E8F2EC]">Date</th>
+                    <th className="px-6 py-4 border-b border-[#E8F2EC]">Output</th>
+                    <th className="px-6 py-4 border-b border-[#E8F2EC]">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#E8F2EC] bg-white">
+                  {[...productions].filter(p => p.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map((prod, index) => (
+                    <tr key={prod.id || index} className="hover:bg-[#FDFBF7] transition-colors group">
+                      <td className="px-6 py-4 text-sm text-[#4A5D52] font-medium">{new Date(prod.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-[#0B1A13]">{prod.count?.toLocaleString() || 0}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                          Recorded
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-6 py-12 text-center text-[#7D8F85]">
+                <span className="material-symbols-outlined text-3xl mb-2 text-[#C3D9CE]">receipt_long</span>
+                <p className="font-medium">Your record log is empty.</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Add Record Modal */}
         {isAddModalOpen && (
           <div className="fixed inset-0 bg-[#0B1A13]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-[#E8F2EC]">
@@ -339,9 +340,10 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-[#1A2E22]">Date</label>
                     <input
                       type="date"
-                      defaultValue={new Date().toISOString().slice(0, 10)}
-                      disabled
-                      className="w-full px-4 py-3.5 bg-[#FDFBF7] border border-[#E8F2EC] rounded-xl text-[#7D8F85] opacity-70 cursor-not-allowed"
+                      value={newDate}
+                      onChange={e => setNewDate(e.target.value)}
+                      required
+                      className="w-full px-4 py-3.5 bg-[#FDFBF7] border border-[#E8F2EC] rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all duration-200 outline-none text-[#0B1A13]"
                     />
                   </div>
                   <div className="space-y-1.5">
