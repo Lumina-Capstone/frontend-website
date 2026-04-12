@@ -6,6 +6,7 @@ import Upload from './pages/Upload';
 import Records from './pages/Records';
 import SignIn from './pages/Signin';
 import SignUp from './pages/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -23,7 +25,6 @@ function App() {
           <Route path="/records" element={<Records />} />
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

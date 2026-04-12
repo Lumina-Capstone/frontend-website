@@ -5,6 +5,7 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail, 
   signOut,
   onAuthStateChanged,
   type User,
@@ -36,6 +37,10 @@ export async function signInWithEmail(email: string, password: string) {
 export async function signInWithGoogle() {
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
+}
+
+export async function resetPassword(email: string) {
+  return sendPasswordResetEmail(auth, email);
 }
 
 export async function logout() {
