@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Upload from './pages/Upload';
 import Records from './pages/Records';
-import SignIn from './pages/Signin';
+import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import DashboardLayout from './components/DashboardLayout';
