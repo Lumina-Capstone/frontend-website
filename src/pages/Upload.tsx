@@ -1,144 +1,246 @@
-import { Link } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+const API_BASE_URL = 'https://lumina-backend-e7cjgdhte6hdg9by.southeastasia-01.azurewebsites.net';
 
 export default function Upload() {
-  return (
-    <div className="flex-1 w-full pt-12 min-h-screen px-12 pb-20 relative">
-      {/* Top Navigation (Mobile/Header Cluster) */}
-      <header className="mb-12 flex justify-between items-center">
-        <div>
-          <h2 className="font-headline font-extrabold text-2xl tracking-tighter text-on-surface">OCR Upload</h2>
-          <p className="text-xs text-on-surface-variant mt-1 font-medium">Digitalize your physical records instantly.</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="h-1 w-1 bg-secondary rounded-full"></div>
-          <span className="text-[10px] uppercase tracking-widest font-bold text-secondary">System Active</span>
-        </div>
-      </header>
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [receiptType, setReceiptType] = useState<'income' | 'expenses'>('expenses');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
-      <div className="max-w-4xl mx-auto">
-        {/* Instructional Bento Cluster */}
-        <div className="grid grid-cols-12 gap-6 mb-12">
-          <div className="col-span-8 p-8 bg-surface-container-low rounded-xl relative overflow-hidden">
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  };
+
+  const handleFileSelect = (selectedFile: File) => {
+    if (!selectedFile.type.startsWith('image/')) {
+      alert('Please upload an image file (JPG, PNG).');
+      return;
+    }
+    setFile(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+  };
+
+  const clearSelection = () => {
+    setFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file); 
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/ocr/${receiptType}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('OCR Processing failed');
+      }
+
+      const data = await response.json();
+      console.log("OCR Success:", data);
+      
+      alert("Receipt processed successfully!");
+      navigate('/records');
+
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to process receipt. Make sure the backend is running and the ML models are loaded.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
+      <div className="max-w-[1000px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col">
+        
+        <header className="flex flex-col mb-12">
+          <h1 className="font-['Manrope',sans-serif] text-3xl md:text-4xl font-bold tracking-tight text-[#0B1A13]">OCR Upload</h1>
+          <p className="text-[#4A5D52] text-sm mt-2 font-light max-w-lg">Digitalize your physical farm records instantly.</p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="md:col-span-2 bg-white rounded-3xl border border-[#E8F2EC] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
             <div className="relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-4 block">Precision Processing</span>
-              <h3 className="font-headline text-3xl font-bold text-on-surface mb-4 leading-tight">
-                Fast, Accurate <br/>Record Extraction.
+              <span className="text-xs font-bold uppercase tracking-widest text-[#7D8F85] mb-3 block">Precision Processing</span>
+              <h3 className="font-['Manrope',sans-serif] text-2xl font-extrabold text-[#0B1A13] mb-3">
+                Fast, Accurate Extraction.
               </h3>
-              <p className="text-on-surface-variant text-sm max-w-sm leading-relaxed">
-                Our advanced neural engine identifies line items, taxes, and vendor details with 99.4% accuracy in under two seconds.
+              <p className="text-[#4A5D52] text-sm max-w-md leading-relaxed">
+                Our proprietary neural engine identifies line items, quantities, and totals with high accuracy in seconds.
               </p>
             </div>
-            {/* Prismatic Node Decor */}
-            <div className="absolute top-8 right-8 w-1 h-1 bg-secondary-container rounded-full"></div>
-            <div className="absolute bottom-8 left-8 w-1 h-1 bg-secondary-container rounded-full"></div>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-50 rounded-bl-full -mr-10 -mt-10"></div>
           </div>
-          <div className="col-span-4 p-8 bg-primary-container rounded-xl flex flex-col justify-between">
-            <span className="material-symbols-outlined text-on-primary-fixed text-4xl">bolt</span>
-            <div>
-              <div className="text-2xl font-headline font-bold text-on-primary-fixed tracking-tight">Real-time</div>
-              <div className="text-xs text-on-primary-fixed-variant font-medium">Auto-sync to cloud</div>
+
+          <div className="bg-[#11241A] rounded-3xl p-8 shadow-xl flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 blur-2xl rounded-full"></div>
+            <span className="material-symbols-outlined text-emerald-400 text-4xl mb-4 relative z-10">memory</span>
+            <div className="relative z-10">
+              <div className="font-['Manrope',sans-serif] text-xl font-bold text-white mb-1">Smart Vision</div>
+              <div className="text-xs text-[#8EA698] font-medium">Cloud-accelerated processing</div>
             </div>
           </div>
         </div>
 
-        {/* Main Upload Zone */}
-        <section className="relative">
-          <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm">
-            <div className="custom-dashed rounded-xl p-20 flex flex-col items-center justify-center text-center transition-all hover:bg-surface-container-low/50 group cursor-pointer">
-              <div className="relative mb-8">
-                <div className="absolute -inset-4 bg-secondary-container/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center relative">
-                  <span className="material-symbols-outlined text-4xl text-on-surface-variant group-hover:scale-110 transition-transform">document_scanner</span>
-                </div>
+        <div className="mb-6 flex justify-center">
+          <div className="bg-white p-1 rounded-xl border border-[#E8F2EC] inline-flex shadow-sm">
+            <button
+              onClick={() => setReceiptType('expenses')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                receiptType === 'expenses'
+                  ? 'bg-orange-50 text-orange-700 shadow-sm'
+                  : 'text-[#7D8F85] hover:text-[#0B1A13]'
+              }`}
+            >
+              Expense Receipt
+            </button>
+            <button
+              onClick={() => setReceiptType('income')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                receiptType === 'income'
+                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                  : 'text-[#7D8F85] hover:text-[#0B1A13]'
+              }`}
+            >
+              Income Receipt
+            </button>
+          </div>
+        </div>
+
+        <section className="bg-white rounded-3xl border border-[#E8F2EC] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-12">
+          {!file ? (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-2xl p-16 flex flex-col items-center justify-center text-center transition-all duration-200 ${
+                isDragging
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-[#C3D9CE] hover:border-emerald-400 hover:bg-[#FDFBF7]'
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/jpeg, image/png, image/jpg"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileInput}
+              />
+              
+              <div className="w-20 h-20 bg-[#FDFBF7] border border-[#E8F2EC] shadow-sm rounded-full flex items-center justify-center mb-6">
+                <span className="material-symbols-outlined text-4xl text-emerald-600">add_photo_alternate</span>
               </div>
-              <h4 className="font-headline text-xl font-bold text-on-surface mb-2">Drag and drop your receipt here</h4>
-              <p className="text-on-surface-variant text-sm mb-10 max-w-xs mx-auto">Supports JPG, PNG, and PDF files up to 10MB. For best results, ensure the text is clearly visible.</p>
-              <button className="bg-primary-container text-on-primary-fixed px-8 py-3 rounded-full font-headline font-bold text-sm flex items-center gap-2 hover:shadow-lg active:scale-95 transition-all bg-gradient-to-br from-primary-container to-primary-fixed">
-                <span className="material-symbols-outlined text-lg">upload_file</span>
+              
+              <h4 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13] mb-2">
+                Drag and drop your receipt here
+              </h4>
+              <p className="text-[#7D8F85] text-sm mb-8 max-w-sm">
+                Supports JPG and PNG up to 10MB. Ensure text is clearly visible and well-lit.
+              </p>
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-emerald-600 text-white px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-600/20 transition-all active:scale-95"
+              >
+                <span className="material-symbols-outlined text-lg">folder_open</span>
                 Browse Files
               </button>
-
-              <div className="mt-12 flex items-center gap-8 opacity-40">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">verified</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Encrypted</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">history</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Auto-Archived</span>
-                </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center pt-4 pb-8">
+              <div className="relative mb-8 max-w-sm w-full rounded-2xl overflow-hidden shadow-lg border border-[#E8F2EC]">
+                <img src={previewUrl!} alt="Receipt preview" className="w-full h-auto max-h-[400px] object-contain bg-slate-50" />
+                <button
+                  onClick={clearSelection}
+                  disabled={isUploading}
+                  className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-[#1A2E22] hover:bg-white hover:text-red-500 shadow-sm transition-colors disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
               </div>
+
+              <div className="text-center mb-8">
+                <p className="font-bold text-[#0B1A13]">{file.name}</p>
+                <p className="text-xs text-[#7D8F85] mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+
+              <button
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="w-full max-w-sm bg-emerald-600 text-white py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-lg">autorenew</span>
+                    Processing OCR...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-lg">memory</span>
+                    Extract {receiptType === 'income' ? 'Income' : 'Expense'} Data
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          <div className="mt-8 flex items-center justify-center gap-8 border-t border-[#E8F2EC] pt-6">
+            <div className="flex items-center gap-2 text-[#7D8F85]">
+              <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2 text-[#7D8F85]">
+              <span className="material-symbols-outlined text-[18px]">history</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Auto-Archived</span>
             </div>
           </div>
-          {/* Prismatic Bleed Decor */}
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-secondary-container/10 blur-3xl -z-10 rounded-full"></div>
         </section>
 
-        {/* Recent History (Minimalist List) */}
-        <div className="mt-20">
-          <div className="flex justify-between items-end mb-8">
-            <h5 className="font-headline font-bold text-lg text-on-surface">Recent Scans</h5>
-            <Link to="/records" className="text-xs font-bold text-secondary uppercase tracking-widest hover:underline decoration-2 underline-offset-4">
-              View All Archive
-            </Link>
+        <footer className="mt-auto w-full flex flex-col md:flex-row justify-between items-center py-8 border-t border-[#E8F2EC]">
+          <div className="mb-4 md:mb-0">
+            <p className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
           </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-xl group hover:bg-surface-bright transition-all">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-lg overflow-hidden bg-surface-container-highest flex-shrink-0">
-                  <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBemUfQBA7SNkzNdSujhrItGtWJBwP9DdZ-GeR7n5aQlZ7OVgrC5CRMX1SQ01ZPGUk3r3XjJm9sxOh5hrt1PMJjXsq8Ce_ukeascv7FpsmY89PdC_eWXrZlOiXY_GnE_POb32RBvCbUg5NE5iC_epmj5fzWEkGeSsYZOkA4MtNMqD5IXFX0hqASHVeF_-oaxEwZTiA96xrO1VKg-T69rBl2OQKa5-9lFHdWV61smcyNQs8PmtazgW_jyqK00OSbE8wiXvL5HXci10U"
-                    alt="Receipt"
-                    data-alt="close-up scan of a paper grocery receipt with black text and clear itemized prices"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-on-surface">Whole Foods Market #1024</div>
-                  <div className="text-[10px] text-on-surface-variant font-medium">May 14, 2024 • 2:34 PM</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-on-surface">$142.50</div>
-                <div className="text-[10px] text-secondary font-bold uppercase tracking-tighter">Processed</div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-xl group hover:bg-surface-bright transition-all">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-lg overflow-hidden bg-surface-container-highest flex-shrink-0">
-                  <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6natDQz4QPGEfszrsbnl1rTxhHY6_05PfpYnQhOqVWLt574eQ1kGto8HYZcVYASjynQauo85jqvTgyj0kU8NyYIxXen36i3tFdRPhBWtTl9MMFuxm_JbvnfZ-arW6rAW7eSM-bbD5R5WtaWVuKW7yJL7xDeqIS73K__V9I37-Q3mq8ZngdCe1-bIaGix8MG5L3Pw8vBkYnOQmH7kDF_qc0IJNyWnTDpLAdPe1YD-CybrmzXwIhkBaflzwtdAANh4XfyrgjjhfsNk"
-                    alt="Receipt"
-                    data-alt="top view of a coffee shop receipt lying on a light wooden table surface"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-on-surface">Blue Bottle Coffee</div>
-                  <div className="text-[10px] text-on-surface-variant font-medium">May 13, 2024 • 9:15 AM</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-on-surface">$8.75</div>
-                <div className="text-[10px] text-secondary font-bold uppercase tracking-tighter">Processed</div>
-              </div>
-            </div>
+          <div className="flex gap-8">
+            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
+            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
+            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
           </div>
-        </div>
+        </footer>
+
       </div>
-
-      <footer className="mt-16 w-full flex flex-col md:flex-row justify-between items-center py-12 border-t border-slate-200/15">
-        <div className="mb-4 md:mb-0">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500">© 2024 Lumina Tech. All rights reserved.</p>
-        </div>
-        <div className="flex gap-8">
-          <a href="#" className="text-[10px] uppercase tracking-widest text-slate-500 hover:text-lime-500 transition-colors">Privacy Policy</a>
-          <a href="#" className="text-[10px] uppercase tracking-widest text-slate-500 hover:text-lime-500 transition-colors">Terms of Service</a>
-          <a href="#" className="text-[10px] uppercase tracking-widest text-slate-500 hover:text-lime-500 transition-colors">Contact</a>
-        </div>
-      </footer>
     </div>
   );
 }
