@@ -26,70 +26,124 @@ export default function Landing() {
     },
   ];
 
+  const steps = [
+    {
+      icon: 'upload',
+      title: '1. Upload',
+      description: 'Upload handwritten notes or receipts.',
+    },
+    {
+      icon: 'auto_awesome',
+      title: '2. Process',
+      description: 'OCR detects and extracts key information automatically.',
+    },
+    {
+      icon: 'insights',
+      title: '3. Analyze',
+      description: 'View structured data and track production & expenses.',
+    },
+  ];
+
   return (
-    <div className="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container min-h-screen">
-      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-4 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <img src="Logo.png" alt="Lumina Logo" className="h-10 w-auto" />
+    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
+      
+      <header className="fixed top-4 w-[calc(100%-2rem)] left-4 md:w-[calc(100%-4rem)] md:left-8 z-50 flex justify-between items-center px-6 py-3 bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => scrollToSection('home')}>
+          <div className="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+             <span className="material-symbols-outlined text-xl">spa</span>
+          </div>
+          <span className="font-bold text-xl tracking-tight font-['Manrope',sans-serif] text-slate-800">Lumina</span>
         </div>
-        <nav className="hidden md:flex gap-8 items-center">
-          <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-700 hover:text-green-600 transition">Features</button>
-          <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-gray-700 hover:text-green-600 transition">How It Works</button>
-          <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-gray-700 hover:text-green-600 transition">About</button>
+        <nav className="hidden md:flex gap-8 items-center px-6 py-2 border-slate-200/50">
+          <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Features</button>
+          <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">How It Works</button>
+          <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">About</button>
         </nav>
-        <Link to="/login" className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-green-700 transition shadow-sm">
-          Login
+        <Link to="/signin" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:shadow-emerald-600/20 active:scale-95">
+          Sign In
         </Link>
       </header>
 
       <main className="relative pt-24 overflow-hidden">
-        {/* Hero Section (home) */}
-        <section id="home" className="max-w-7xl mx-auto px-8 pt-20 pb-32 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-          <div className="lg:col-span-7 space-y-8">
-            <h1 className="font-headline text-6xl md:text-8xl font-extrabold tracking-tight text-gray-900 leading-[1.05]">
-              Automate your <span className="text-green-600 italic font-light">receipts.</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-xl font-light leading-relaxed">
-              Capture every receipt. Turn it into clean, structured data instantly.
-            </p>
-          </div>
-          <div className="lg:col-span-5 relative">
-            <div className="relative z-10 rounded-2xl overflow-hidden bg-white p-4 shadow-xl">
-              <img
-                src="https://img.freepik.com/free-photo/top-view-hands-holding-smartphone_23-2150171445.jpg?semt=ais_incoming&w=740&q=80"
-                alt="Dashboard preview"
-                className="w-full h-auto rounded-lg"
-              />
+        
+        <div className="absolute top-0 left-1/2 w-[600px] h-[600px] bg-[#E8F2EC] rounded-full mix-blend-multiply filter blur-[100px] opacity-70 -translate-x-1/2 -translate-y-1/4 -z-10 pointer-events-none"></div>
+        <div className="absolute top-64 right-1/4 w-[400px] h-[400px] bg-[#F2EDE8] rounded-full mix-blend-multiply filter blur-[80px] opacity-60 translate-x-1/2 -z-10 pointer-events-none"></div>
+
+        <section id="home" className="max-w-5xl mx-auto px-6 pt-32 pb-40 flex flex-col items-center text-center relative z-10 mt-8">
+          
+          <h1 className="font-['Manrope',sans-serif] text-6xl md:text-8xl lg:text-[6.5rem] font-extrabold tracking-tight text-[#0B1A13] leading-[1.05] mb-8">
+            Automate your <br/>
+            <span className="text-emerald-600 italic font-light">receipts.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-[#4A5D52] max-w-2xl font-light leading-relaxed mb-16">
+            Capture every receipt. Turn it into clean, structured data instantly.
+          </p>
+          
+          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
+            
+            <div className="bg-white p-6 rounded-2xl shadow-xl shadow-emerald-900/5 border border-slate-100 w-full max-w-[280px] transform md:-rotate-3 transition-transform hover:rotate-0">
+              <div className="flex items-center justify-between mb-6 border-b border-dashed border-slate-200 pb-4">
+                 <span className="material-symbols-outlined text-slate-400">receipt_long</span>
+                 <div className="h-2 w-16 bg-slate-100 rounded-full"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-2.5 w-full bg-slate-100 rounded-full"></div>
+                <div className="h-2.5 w-3/4 bg-slate-100 rounded-full"></div>
+                <div className="h-2.5 w-5/6 bg-slate-100 rounded-full"></div>
+                <div className="h-2.5 w-1/2 bg-slate-100 rounded-full"></div>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 bg-[#E8F2EC] w-14 h-14 rounded-full flex items-center justify-center text-emerald-600 shadow-sm border border-white md:rotate-0 rotate-90 my-4 md:my-0">
+               <span className="material-symbols-outlined text-2xl">arrow_forward</span>
+            </div>
+
+            <div className="bg-[#11241A] p-6 rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-[320px] transform md:rotate-2 transition-transform hover:rotate-0 text-left">
+              <div className="flex items-center gap-2 mb-6">
+                 <span className="material-symbols-outlined text-emerald-400 text-sm">check_circle</span>
+                 <span className="text-emerald-50 text-xs font-mono tracking-wider">JSON_EXTRACTED</span>
+              </div>
+              <div className="space-y-4 font-mono text-sm">
+                <div className="flex justify-between border-b border-emerald-800/50 pb-2">
+                  <span className="text-emerald-400/70">date</span>
+                  <span className="text-emerald-50">12 Apr 2026</span>
+                </div>
+                <div className="flex justify-between border-b border-emerald-800/50 pb-2">
+                  <span className="text-emerald-400/70">item</span>
+                  <span className="text-emerald-50">Duck Eggs</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-400/70">qty</span>
+                  <span className="text-emerald-400 font-bold">50 Trays</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-24 px-8 bg-gray-50">
+        <section id="features" className="py-32 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            <div className="text-center max-w-2xl mx-auto mb-20">
+              <h2 className="font-['Manrope',sans-serif] text-4xl md:text-5xl font-bold tracking-tight text-[#0B1A13] mb-6 leading-tight">
                 Designed for digitizing farm records
               </h2>
-              <p className="text-gray-600 text-lg">
+              <p className="text-[#4A5D52] text-lg font-light">
                 Automatically capture and organize your receipts into structured data.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
-                >
-                  <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-6">
-                    <span className="material-symbols-outlined text-2xl text-green-600">
+                <div key={index} className="group flex flex-col items-center text-center px-6 py-8 rounded-3xl hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 border border-transparent hover:border-[#E8F2EC]">
+                  <div className="flex-shrink-0 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-[#E8F2EC] group-hover:bg-[#E8F2EC] group-hover:border-transparent transition-all duration-300 mb-6">
+                    <span className="material-symbols-outlined text-3xl text-emerald-600">
                       {feature.icon}
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  <h3 className="font-['Manrope',sans-serif] text-2xl font-bold text-[#0B1A13] mb-3">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-[#4A5D52] leading-relaxed text-lg font-light">
                     {feature.description}
                   </p>
                 </div>
@@ -98,59 +152,53 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="how-it-works" className="py-24 px-8 max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="font-headline text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-gray-600 text-lg">Three simple steps to digitize your farm records.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-2xl text-green-600">upload</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">1. Upload</h3>
-              <p className="text-gray-600">Upload handwritten notes or receipts.</p>
+        <section id="how-it-works" className="py-32 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-20">
+              <h2 className="font-['Manrope',sans-serif] text-4xl md:text-5xl font-bold text-[#0B1A13] mb-6">How It Works</h2>
+              <p className="text-[#4A5D52] text-lg font-light">Three simple steps to digitize your farm records.</p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-2xl text-green-600">auto_awesome</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">2. Process</h3>
-              <p className="text-gray-600">OCR detects and extracts key information automatically.</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-2xl text-green-600">insights</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">3. Analyze</h3>
-              <p className="text-gray-600">View structured data and track production & expenses.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+              <div className="hidden md:block absolute top-10 left-[20%] right-[20%] h-[1px] bg-gradient-to-r from-transparent via-[#C3D9CE] to-transparent z-0"></div>
+
+              {steps.map((step, i) => (
+                <div key={i} className="relative z-10 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-[#FDFBF7] rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E8F2EC]">
+                    <span className="material-symbols-outlined text-3xl text-emerald-600">{step.icon}</span>
+                  </div>
+                  <h3 className="font-['Manrope',sans-serif] text-2xl font-bold text-[#0B1A13] mb-3">{step.title}</h3>
+                  <p className="text-[#4A5D52] font-light leading-relaxed max-w-xs">{step.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section id="about" className="py-24 px-8 bg-gray-50">
-          <div className="max-w-7xl mx-auto text-center">
-            <h2 className="font-headline text-4xl font-bold text-gray-900 mb-6">About Lumina</h2>
-            <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+        <section id="about" className="py-32 px-6 relative">
+          <div className="max-w-5xl mx-auto text-center relative z-10">
+            <span className="material-symbols-outlined text-5xl text-emerald-200 mb-6 block">spa</span>
+            <h2 className="font-['Manrope',sans-serif] text-4xl md:text-5xl font-bold text-[#0B1A13] mb-8">About Lumina</h2>
+            <p className="text-[#4A5D52] text-xl md:text-2xl font-light max-w-3xl mx-auto leading-relaxed">
               Our OCR-based system converts handwritten notes into structured data, enabling better monitoring of production and financial activities.
             </p>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section id="contact" className="px-8 py-24">
-          <div className="max-w-7xl mx-auto rounded-3xl bg-gray-900 p-16 md:p-24 relative overflow-hidden text-center">
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-br from-green-500/20 to-green-700/10 blur-3xl"></div>
+        <section id="contact" className="px-6 py-24 pb-32">
+          <div className="max-w-6xl mx-auto rounded-[3rem] bg-[#11241A] p-16 md:p-24 relative overflow-hidden text-center shadow-2xl">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-600/30 rounded-full blur-[80px] pointer-events-none"></div>
+            
             <div className="relative z-10">
-              <h2 className="font-headline text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-tight mb-6">
+              <h2 className="font-['Manrope',sans-serif] text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-tight mb-6">
                 Start digitizing your farm records
               </h2>
-              <p className="text-white/70 text-xl md:text-2xl font-light max-w-2xl mx-auto mb-10">
+              <p className="text-emerald-100/70 text-xl md:text-2xl font-light max-w-2xl mx-auto mb-10">
                 Transform handwritten notes into structured data and gain better insights.
               </p>
               <Link
                 to="/signup"
-                className="inline-block bg-green-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-green-600 transition shadow-lg"
+                className="inline-block bg-emerald-500 text-[#0B1A13] px-10 py-4 rounded-full font-bold text-lg hover:bg-emerald-400 hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]"
               >
                 Get Started
               </Link>
@@ -159,17 +207,17 @@ export default function Landing() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full flex flex-col md:flex-row justify-between items-center px-8 py-12 bg-white border-t border-gray-100">
-        <div className="mb-4 md:mb-0">
-          <p className="text-xs uppercase tracking-widest text-gray-500">© 2026 Lumina Tech. All rights reserved.</p>
+      <footer className="w-full flex flex-col md:flex-row justify-between items-center px-8 py-12 border-t border-[#E8F2EC] mt-auto">
+        <div className="mb-6 md:mb-0">
+          <p className="text-xs uppercase tracking-widest text-[#7D8F85] font-semibold">© 2026 Lumina Tech. All rights reserved.</p>
         </div>
-        <div className="flex gap-8">
-          <a href="#" className="text-xs uppercase tracking-widest text-gray-500 hover:text-green-600 transition">Privacy Policy</a>
-          <a href="#" className="text-xs uppercase tracking-widest text-gray-500 hover:text-green-600 transition">Terms of Service</a>
-          <a href="#" className="text-xs uppercase tracking-widest text-gray-500 hover:text-green-600 transition">Contact</a>
+        <div className="flex flex-wrap justify-center gap-8">
+          <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] hover:text-emerald-600 font-semibold transition">Privacy Policy</a>
+          <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] hover:text-emerald-600 font-semibold transition">Terms of Service</a>
+          <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] hover:text-emerald-600 font-semibold transition">Contact</a>
         </div>
       </footer>
+      
     </div>
   );
 }
