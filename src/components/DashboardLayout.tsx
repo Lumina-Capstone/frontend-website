@@ -1,6 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Receipt, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { logout, getSession, clearSession, onAuthChange } from '../services/auth';
 
 export default function DashboardLayout() {
@@ -43,17 +42,17 @@ export default function DashboardLayout() {
   const userInitial = displayName.charAt(0).toUpperCase();
 
   const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
-    { to: '/records', icon: Receipt, label: 'Records' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
+    { to: '/dashboard', icon: 'dashboard', label: 'Overview' },
+    { to: '/records', icon: 'receipt_long', label: 'Records' },
+    { to: '/settings', icon: 'settings', label: 'Settings' },
   ];
 
   const TooltipWrapper = ({ children, label, show }: { children: React.ReactNode; label: string; show: boolean }) => {
     if (!show) return <>{children}</>;
     return (
-      <div className="relative group">
+      <div className="relative group flex justify-center">
         {children}
-        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-50">
+        <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-white text-[#0B1A13] font-bold text-xs rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.1)] border border-[#E8F2EC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
           {label}
         </div>
       </div>
@@ -61,52 +60,58 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
+    <div className="bg-[#FDFBF7] min-h-screen flex font-['Inter',sans-serif] selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
+      
       <aside
-        className={`flex flex-col h-screen fixed left-0 top-0 z-40 bg-[#0f172a] shadow-xl transition-all duration-200 ease-in-out ${
-          isCollapsed ? 'w-[72px]' : 'w-[240px]'
+        className={`flex flex-col h-screen fixed left-0 top-0 z-40 bg-[#11241A] shadow-2xl transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'w-[88px]' : 'w-[260px]'
         }`}
       >
-        <div className="flex items-center justify-between px-4 h-16 border-b border-white/10">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <img src="/Logo.png" alt="Lumina" className="h-7 w-auto" />
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3.5 top-8 w-7 h-7 bg-white border border-[#E8F2EC] rounded-full flex items-center justify-center text-[#11241A] shadow-sm hover:scale-110 hover:text-emerald-600 transition-all z-50"
+        >
+          <span className="material-symbols-outlined text-[16px]">
+            {isCollapsed ? 'chevron_right' : 'chevron_left'}
+          </span>
+        </button>
+
+        <div className={`flex items-center h-24 px-6 mb-2 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-500 text-[#0B1A13] w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+               <span className="material-symbols-outlined text-[22px]">spa</span>
             </div>
-          )}
-          {isCollapsed && (
-            <div className="w-full flex justify-center">
-              <img src="/Logo.png" alt="Lumina" className="h-7 w-auto" />
-            </div>
-          )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
-            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
+            {!isCollapsed && (
+              <span className="font-['Manrope',sans-serif] font-bold text-2xl tracking-tight text-white">
+                Lumina
+              </span>
+            )}
+          </div>
         </div>
 
-        <nav className="flex-1 px-3 py-6 space-y-1">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar">
           {navItems.map((item) => (
             <TooltipWrapper key={item.to} label={item.label} show={isCollapsed}>
               <NavLink
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                  `flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${
                     isActive
-                      ? 'bg-green-500/12 text-white'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                  } ${isCollapsed ? 'justify-center' : ''}`
+                      ? 'bg-emerald-500 text-white shadow-[0_4px_20px_-5px_rgba(16,185,129,0.4)]'
+                      : 'text-[#8EA698] hover:bg-white/5 hover:text-white'
+                  } ${isCollapsed ? 'justify-center px-0 w-14 mx-auto' : ''}`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <item.icon
-                      size={18}
-                      strokeWidth={1.5}
-                      className={isActive ? 'text-green-500' : 'text-slate-400 group-hover:text-slate-300'}
-                    />
-                    {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    <span 
+                      className={`material-symbols-outlined text-[22px] transition-colors ${
+                        isActive ? 'text-white' : 'text-[#8EA698] group-hover:text-emerald-400'
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    {!isCollapsed && <span className={`text-sm font-bold tracking-wide ${isActive ? 'text-white' : ''}`}>{item.label}</span>}
                   </>
                 )}
               </NavLink>
@@ -114,31 +119,18 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        <div className="px-3 pb-6 mt-auto space-y-3">
-          <TooltipWrapper label={displayName} show={isCollapsed}>
-            <div
-              className={`flex items-center gap-3 p-2 rounded-lg transition-all ${
-                isCollapsed ? 'justify-center' : ''
-              }`}
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
-                {userInitial}
-              </div>
-              {!isCollapsed && (
-                <p className="text-white text-sm font-semibold truncate">{displayName}</p>
-              )}
-            </div>
-          </TooltipWrapper>
-
+        <div className="px-4 pb-6 mt-auto space-y-2 border-t border-white/5 pt-6">
           <TooltipWrapper label="Logout" show={isCollapsed}>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-300 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 ${
-                isCollapsed ? 'justify-center' : ''
+              className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 text-[#8EA698] hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 group ${
+                isCollapsed ? 'justify-center px-0 w-14 mx-auto' : ''
               }`}
             >
-              <LogOut size={18} strokeWidth={1.5} />
+              <span className="material-symbols-outlined text-[22px] group-hover:text-red-400 transition-colors">
+                logout
+              </span>
               {!isCollapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
             </button>
           </TooltipWrapper>
@@ -146,14 +138,15 @@ export default function DashboardLayout() {
       </aside>
 
       <main
-        className={`flex-1 min-h-screen bg-gray-50 overflow-auto transition-all duration-200 ${
-          isCollapsed ? 'ml-[72px]' : 'ml-[240px]'
+        className={`flex-1 min-h-screen bg-[#FDFBF7] transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'ml-[88px]' : 'ml-[260px]'
         }`}
       >
-        <div className="p-0">
+        <div className="h-full w-full">
           <Outlet />
         </div>
       </main>
+      
     </div>
   );
 }
