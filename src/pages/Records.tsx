@@ -1,4 +1,3 @@
-// FIX: Added 'React' to the import list to stop the white screen crash!
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 

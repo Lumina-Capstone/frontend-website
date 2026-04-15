@@ -4,15 +4,12 @@ import { logout, getSession, clearSession, onAuthChange } from '../services/auth
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState<string>('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const session = getSession();
-    if (session?.email) {
-      setUserEmail(session.email);
-    } else {
+    if (!session?.email) {
       navigate('/login');
     }
 
@@ -37,9 +34,6 @@ export default function DashboardLayout() {
       setIsLoggingOut(false);
     }
   };
-
-  const displayName = userEmail ? userEmail.split('@')[0] : 'User';
-  const userInitial = displayName.charAt(0).toUpperCase();
 
   const navItems = [
     { to: '/dashboard', icon: 'dashboard', label: 'Overview' },
