@@ -9,7 +9,7 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const API_BASE_URL = 'https://lumina-backend-e7cjgdhte6hdg9by.southeastasia-01.azurewebsites.net';
+const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space';
 
 export default function Dashboard() {
   const [productions, setProductions] = useState<any[]>([]);

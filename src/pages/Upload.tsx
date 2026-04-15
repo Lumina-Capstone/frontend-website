@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'https://lumina-backend-e7cjgdhte6hdg9by.southeastasia-01.azurewebsites.net';
+const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
@@ -59,7 +59,7 @@ export default function Upload() {
     formData.append('file', file); 
 
     try {
-      const response = await fetch(`${API_BASE_URL}/ocr/${receiptType}`, {
+      const response = await fetch(`${API_BASE_URL}ocr/${receiptType}`, {  
         method: 'POST',
         body: formData,
       });
@@ -76,7 +76,7 @@ export default function Upload() {
 
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to process receipt. Make sure the backend is running and the ML models are loaded.");
+      alert("Failed to process receipt. Check browser console for details.");
     } finally {
       setIsUploading(false);
     }
@@ -159,18 +159,15 @@ export default function Upload() {
                 ref={fileInputRef}
                 onChange={handleFileInput}
               />
-              
               <div className="w-20 h-20 bg-[#FDFBF7] border border-[#E8F2EC] shadow-sm rounded-full flex items-center justify-center mb-6">
                 <span className="material-symbols-outlined text-4xl text-emerald-600">add_photo_alternate</span>
               </div>
-              
               <h4 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13] mb-2">
                 Drag and drop your receipt here
               </h4>
               <p className="text-[#7D8F85] text-sm mb-8 max-w-sm">
                 Supports JPG and PNG up to 10MB. Ensure text is clearly visible and well-lit.
               </p>
-              
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="bg-emerald-600 text-white px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-600/20 transition-all active:scale-95"
@@ -216,30 +213,7 @@ export default function Upload() {
               </button>
             </div>
           )}
-
-          <div className="mt-8 flex items-center justify-center gap-8 border-t border-[#E8F2EC] pt-6">
-            <div className="flex items-center gap-2 text-[#7D8F85]">
-              <span className="material-symbols-outlined text-[18px]">verified_user</span>
-              <span className="text-xs font-bold uppercase tracking-widest">Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2 text-[#7D8F85]">
-              <span className="material-symbols-outlined text-[18px]">history</span>
-              <span className="text-xs font-bold uppercase tracking-widest">Auto-Archived</span>
-            </div>
-          </div>
         </section>
-
-        <footer className="mt-auto w-full flex flex-col md:flex-row justify-between items-center py-8 border-t border-[#E8F2EC]">
-          <div className="mb-4 md:mb-0">
-            <p className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
-          </div>
-          <div className="flex gap-8">
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
-          </div>
-        </footer>
-
       </div>
     </div>
   );
