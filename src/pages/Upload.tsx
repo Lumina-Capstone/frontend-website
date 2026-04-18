@@ -13,6 +13,7 @@ export default function Upload() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -84,6 +85,28 @@ export default function Upload() {
     setExtractedData(updatedData);
   };
 
+  const handleAutoCorrect = async () => {
+    setIsAutoCorrecting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}ocr/autocorrect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(extractedData),
+      });
+      
+      if (!response.ok) throw new Error('AI Auto-correct failed');
+      
+      const data = await response.json();
+      setExtractedData(data.data);
+      
+    } catch (error) {
+      console.error("AI error:", error);
+      alert("AI Auto-correct failed or returned invalid data. Please edit manually.");
+    } finally {
+      setIsAutoCorrecting(false);
+    }
+  };
+
   const handleConfirmSave = async () => {
     setIsSaving(true);
     try {
@@ -126,9 +149,7 @@ export default function Upload() {
                 <span className="text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Original Receipt</span>
                 <button onClick={clearSelection} className="text-red-500 hover:text-red-700 text-sm font-bold transition-colors">Discard</button>
               </div>
-              {/* <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-hidden flex justify-center max-h-[600px]"> */}
               <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-y-auto max-h-[600px] no-scrollbar">
-                {/* <img src={previewUrl!} alt="Original Receipt" className="object-contain w-full h-full" /> */}
                 <img src={previewUrl!} alt="Original Receipt" className="w-full h-auto block" />
               </div>
             </div>
@@ -180,22 +201,31 @@ export default function Upload() {
               </div>
 
               <div className="flex gap-4 pt-6 border-t border-[#E8F2EC]">
-                <button className="px-6 py-4 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2">
-                  <span className="material-symbols-outlined text-lg">auto_awesome</span>
-                  AI Auto-Correct
+                <button 
+                  onClick={handleAutoCorrect}
+                  disabled={isAutoCorrecting || isSaving}
+                  className="px-6 py-4 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isAutoCorrecting ? (
+                    <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Thinking...</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-lg">auto_awesome</span> AI Auto-Correct</>
+                  )}
                 </button>
+                
                 <button
                   onClick={handleConfirmSave}
-                  disabled={isSaving}
+                  disabled={isSaving || isAutoCorrecting}
                   className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
-                    <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Saving to Ledger...</>
+                    <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Saving to Records...</>
                   ) : (
-                    <><span className="material-symbols-outlined text-lg">check_circle</span> Confirm & Save</>
+                    <><span className="material-symbols-outlined text-lg">check_circle</span> Save to Records</>
                   )}
                 </button>
               </div>
+
             </div>
           </div>
         ) : (
