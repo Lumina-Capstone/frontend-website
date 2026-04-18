@@ -192,23 +192,26 @@ export default function Records() {
                                     <tr className="text-[#7D8F85] border-b border-[#E8F2EC] text-left">
                                       <th className="pb-2 font-medium w-16">Qty</th>
                                       <th className="pb-2 font-medium">Item Name</th>
-                                      <th className="pb-2 text-right font-medium">Unit Price</th>
-                                      <th className="pb-2 text-right font-medium">Subtotal</th>
+                                      <th className="pb-2 text-right font-medium">Price</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-[#E8F2EC]/50">
                                     {record.items.map((item: any, i: number) => (
                                       <tr key={i}>
                                         <td className="py-3 text-[#4A5D52]">{item.quantity || 1}x</td>
-                                        <td className="py-3 font-bold text-[#0B1A13]">{item.name || item.itemName || 'Unknown Item'}</td>
-                                        <td className="py-3 text-right text-[#4A5D52]">{formatRupiah(item.price || 0)}</td>
-                                        <td className="py-3 text-right font-bold text-[#0B1A13]">{formatRupiah(item.sub_price || item.price || 0)}</td>
+                                        <td className="py-3 font-bold text-[#0B1A13]">
+                                          {item.item_name || item.name || item.itemName || 'Unknown Item'}
+                                        </td>
+                                        <td className="py-3 text-right font-bold text-[#0B1A13]">
+                                          {/* Use sub_price first, fallback to price */}
+                                          {formatRupiah(item.sub_price || item.price || 0)}
+                                        </td>
                                       </tr>
                                     ))}
                                   </tbody>
                                   <tfoot className="border-t border-[#E8F2EC]">
                                     <tr>
-                                      <td colSpan={3} className="py-3 text-right text-[#7D8F85] font-bold text-xs uppercase tracking-widest">Total</td>
+                                      <td colSpan={2} className="py-3 text-right text-[#7D8F85] font-bold text-xs uppercase tracking-widest">Total</td>
                                       <td className="py-3 text-right font-bold text-[#0B1A13]">{formatRupiah(Number(record.amount || 0))}</td>
                                     </tr>
                                   </tfoot>
