@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
@@ -14,9 +14,20 @@ export default function Upload() {
   const [extractedData, setExtractedData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
+  
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
@@ -32,7 +43,7 @@ export default function Upload() {
 
   const handleFileSelect = (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
-      alert('Please upload an image file (JPG, PNG).');
+      setToast({ message: 'Please upload an image file (JPG, PNG).', type: 'error' });
       return;
     }
     setFile(selectedFile);
@@ -65,9 +76,10 @@ export default function Upload() {
       
       setExtractedData(data.data);
       setIsVerifying(true);
+      setToast({ message: 'Extraction successful! Please verify the data.', type: 'success' });
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to process receipt. Check browser console for details.");
+      setToast({ message: "Failed to process receipt. Check browser console for details.", type: 'error' });
     } finally {
       setIsUploading(false);
     }
@@ -116,10 +128,11 @@ export default function Upload() {
       
       const data = await response.json();
       setExtractedData(data.data);
+      setToast({ message: 'AI successfully cleaned the data.', type: 'success' });
       
     } catch (error) {
       console.error("AI error:", error);
-      alert("AI Auto-correct failed or returned invalid data. Please edit manually.");
+      setToast({ message: "AI Auto-correct failed. Please edit manually.", type: 'error' });
     } finally {
       setIsAutoCorrecting(false);
     }
@@ -136,13 +149,16 @@ export default function Upload() {
       
       if (!response.ok) throw new Error('Failed to save to database');
       
-      alert("Receipt verified and saved successfully!");
-      navigate('/records');
+      setToast({ message: "Receipt verified and saved successfully!", type: 'success' });
+      
+      setTimeout(() => {
+        navigate('/records');
+      }, 1500);
+
     } catch (error) {
       console.error("Save error:", error);
-      alert("Failed to save the verified data.");
-    } finally {
-      setIsSaving(false);
+      setToast({ message: "Failed to save the verified data.", type: 'error' });
+      setIsSaving(false); 
     }
   };
 
@@ -153,7 +169,7 @@ export default function Upload() {
 
   return (
     <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
-      <div className="max-w-[1200px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col">
+      <div className="max-w-[1200px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col relative">
         
         <header className="flex flex-col mb-12">
           <h1 className="font-['Manrope',sans-serif] text-3xl md:text-4xl font-bold tracking-tight text-[#0B1A13]">OCR Upload</h1>
@@ -317,6 +333,20 @@ export default function Upload() {
         </footer>
 
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
+          toast.type === 'success' 
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+            : 'bg-red-50 text-red-800 border-red-200'
+        }`}>
+          <span className="material-symbols-outlined">
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
     </div>
   );
 }

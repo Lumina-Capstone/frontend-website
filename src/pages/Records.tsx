@@ -8,8 +8,11 @@ export default function Records() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -35,6 +38,42 @@ export default function Records() {
 
     fetchRecords();
   }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const confirmDelete = async () => {
+    if (!recordToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}records/${recordToDelete}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete record');
+      }
+
+      setRecords((prevRecords) => prevRecords.filter((record) => record.id !== recordToDelete));
+      if (expandedId === recordToDelete) setExpandedId(null);
+      
+      setToast({ message: "Record successfully deleted.", type: 'success' });
+      
+    } catch (error) {
+      console.error("Delete error:", error);
+      setToast({ message: "Failed to delete record. Please try again.", type: 'error' });
+    } finally {
+      setIsDeleting(false);
+      setRecordToDelete(null);
+    }
+  };
 
   const filteredRecords = records.filter(record => {
     const matchesTab = activeTab === 'All' || record.category === activeTab;
@@ -70,7 +109,7 @@ export default function Records() {
 
   return (
     <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
-      <div className="max-w-[1300px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col">
+      <div className="max-w-[1300px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col relative">
         
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
@@ -183,7 +222,17 @@ export default function Records() {
                         <tr className="bg-[#FDFBF7]">
                           <td colSpan={6} className="py-6 px-8 lg:px-12 border-b border-[#E8F2EC]">
                             <div className="bg-white rounded-xl border border-[#E8F2EC] p-5 shadow-sm">
-                              <h4 className="text-xs font-bold uppercase tracking-widest text-[#7D8F85] mb-6">Record Details</h4>
+                              
+                              <div className="flex justify-between items-start mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Record Details</h4>
+                                <button 
+                                  onClick={() => setRecordToDelete(record.id)}
+                                  className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-all shadow-sm"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">delete</span>
+                                  Delete
+                                </button>
+                              </div>
                               
                               <div className="flex flex-col lg:flex-row gap-8">
                                 {(record.image_url || record.imageUrl) && (
@@ -271,8 +320,53 @@ export default function Records() {
             <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
           </div>
         </footer>
-        
+
       </div>
+
+      {recordToDelete && (
+        <div className="fixed inset-0 bg-[#0B1A13]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-[#E8F2EC] text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <span className="material-symbols-outlined text-3xl text-red-500">warning</span>
+            </div>
+            <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13] mb-2">Delete Record?</h3>
+            <p className="text-[#4A5D52] text-sm mb-8">This action cannot be undone. Are you sure you want to permanently remove this record from your ledger?</p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setRecordToDelete(null)}
+                disabled={isDeleting}
+                className="flex-1 py-3 border border-[#E8F2EC] bg-white rounded-xl text-[#4A5D52] font-bold hover:bg-[#FDFBF7] transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 hover:shadow-lg hover:shadow-red-600/20 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <><span className="material-symbols-outlined animate-spin text-sm">autorenew</span> Deleting...</>
+                ) : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
+          toast.type === 'success' 
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+            : 'bg-red-50 text-red-800 border-red-200'
+        }`}>
+          <span className="material-symbols-outlined">
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
     </div>
   );
 }
