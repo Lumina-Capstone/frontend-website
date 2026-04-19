@@ -136,7 +136,6 @@ export default function Records() {
                 {filteredRecords.length > 0 ? (
                   filteredRecords.map((record, index) => (
                     <React.Fragment key={record.id || index}>
-                      {/* Main Row */}
                       <tr 
                         onClick={() => toggleExpand(record.id)}
                         className="group hover:bg-[#FDFBF7] transition-colors cursor-pointer"
@@ -182,49 +181,66 @@ export default function Records() {
 
                       {expandedId === record.id && (
                         <tr className="bg-[#FDFBF7]">
-                          <td colSpan={6} className="py-6 px-12 border-b border-[#E8F2EC]">
+                          <td colSpan={6} className="py-6 px-8 lg:px-12 border-b border-[#E8F2EC]">
                             <div className="bg-white rounded-xl border border-[#E8F2EC] p-5 shadow-sm">
-                              <h4 className="text-xs font-bold uppercase tracking-widest text-[#7D8F85] mb-4">Itemized Receipt Details</h4>
+                              <h4 className="text-xs font-bold uppercase tracking-widest text-[#7D8F85] mb-6">Record Details</h4>
                               
-                              {record.items && record.items.length > 0 ? (
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-[#7D8F85] border-b border-[#E8F2EC] text-left">
-                                      <th className="pb-2 font-medium w-16">Qty</th>
-                                      <th className="pb-2 font-medium">Item Name</th>
-                                      <th className="pb-2 text-right font-medium">Price</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-[#E8F2EC]/50">
-                                    {record.items.map((item: any, i: number) => (
-                                      <tr key={i}>
-                                        <td className="py-3 text-[#4A5D52]">{item.quantity || 1}x</td>
-                                        <td className="py-3 font-bold text-[#0B1A13]">
-                                          {item.item_name || item.name || item.itemName || 'Unknown Item'}
-                                        </td>
-                                        <td className="py-3 text-right font-bold text-[#0B1A13]">
-                                          {/* Use sub_price first, fallback to price */}
-                                          {formatRupiah(item.sub_price || item.price || 0)}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                  <tfoot className="border-t border-[#E8F2EC]">
-                                    <tr>
-                                      <td colSpan={2} className="py-3 text-right text-[#7D8F85] font-bold text-xs uppercase tracking-widest">Total</td>
-                                      <td className="py-3 text-right font-bold text-[#0B1A13]">{formatRupiah(Number(record.amount || 0))}</td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              ) : (
-                                <div className="text-sm text-[#4A5D52]">
-                                  <p className="font-medium text-[#0B1A13]">{record.itemName}</p>
-                                  <p className="text-xs text-[#7D8F85] mt-2 italic flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">info</span>
-                                    Only summary data available for this record.
-                                  </p>
+                              <div className="flex flex-col lg:flex-row gap-8">
+                                {(record.image_url || record.imageUrl) && (
+                                  <div className="w-full lg:w-1/3 flex-shrink-0">
+                                    <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-hidden flex justify-center max-h-[500px]">
+                                      <img 
+                                        src={record.image_url || record.imageUrl} 
+                                        alt="Original Receipt" 
+                                        className="object-contain w-full h-auto"
+                                      />
+                                    </div>
+                                    <p className="text-center text-[10px] uppercase font-bold text-[#7D8F85] tracking-widest mt-3">Original Image Reference</p>
+                                  </div>
+                                )}
+
+                                <div className={`w-full ${record.image_url || record.imageUrl ? 'lg:w-2/3' : ''}`}>
+                                  {record.items && record.items.length > 0 ? (
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="text-[#7D8F85] border-b border-[#E8F2EC] text-left">
+                                          <th className="pb-3 font-medium w-16">Qty</th>
+                                          <th className="pb-3 font-medium">Item Name</th>
+                                          <th className="pb-3 text-right font-medium">Price</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-[#E8F2EC]/50">
+                                        {record.items.map((item: any, i: number) => (
+                                          <tr key={i}>
+                                            <td className="py-3.5 text-[#4A5D52]">{item.quantity || 1}x</td>
+                                            <td className="py-3.5 font-bold text-[#0B1A13]">
+                                              {item.item_name || item.name || item.itemName || 'Unknown Item'}
+                                            </td>
+                                            <td className="py-3.5 text-right font-bold text-[#0B1A13]">
+                                              {formatRupiah(item.sub_price || item.price || 0)}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                      <tfoot className="border-t-2 border-[#E8F2EC]">
+                                        <tr>
+                                          <td colSpan={2} className="py-4 text-right text-[#7D8F85] font-bold text-xs uppercase tracking-widest">Total</td>
+                                          <td className="py-4 text-right font-bold text-[#0B1A13] text-base">{formatRupiah(Number(record.amount || 0))}</td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  ) : (
+                                    <div className="text-sm text-[#4A5D52] p-4 bg-slate-50 rounded-lg border border-[#E8F2EC]">
+                                      <p className="font-bold text-[#0B1A13]">{record.itemName}</p>
+                                      <p className="text-xs text-[#7D8F85] mt-2 italic flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-[14px]">info</span>
+                                        Only summary data available for this record.
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
+
                             </div>
                           </td>
                         </tr>

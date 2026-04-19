@@ -85,6 +85,24 @@ export default function Upload() {
     setExtractedData(updatedData);
   };
 
+  const handleAddItem = () => {
+    const updatedData = { ...extractedData };
+    updatedData.items.push({ quantity: 1, item_name: '', price: 0, sub_price: 0 });
+    setExtractedData(updatedData);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const updatedData = { ...extractedData };
+    updatedData.items.splice(index, 1);
+    
+    const newTotal = updatedData.items.reduce((sum: number, item: any) => {
+      return sum + Number(item.price || item.sub_price || 0);
+    }, 0);
+    updatedData.amount = newTotal;
+    
+    setExtractedData(updatedData);
+  };
+
   const handleAutoCorrect = async () => {
     setIsAutoCorrecting(true);
     try {
@@ -166,9 +184,9 @@ export default function Upload() {
                 </div>
               </div>
 
-              <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 no-scrollbar mb-8">
+              <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 no-scrollbar mb-4">
                 {extractedData.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex gap-3 items-center bg-[#FDFBF7] p-3 rounded-xl border border-[#E8F2EC]">
+                  <div key={idx} className="flex gap-3 items-center bg-[#FDFBF7] p-3 rounded-xl border border-[#E8F2EC] relative group">
                     <div className="w-16 shrink-0">
                       <label className="block text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Qty</label>
                       <input 
@@ -196,9 +214,25 @@ export default function Upload() {
                         className="w-full bg-white border border-[#E8F2EC] rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none text-right font-bold text-emerald-700"
                       />
                     </div>
+
+                    <button 
+                      onClick={() => handleRemoveItem(idx)} 
+                      className="absolute -right-2 -top-2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-500 hover:text-white"
+                      title="Remove Item"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
                   </div>
                 ))}
               </div>
+
+              <button 
+                onClick={handleAddItem} 
+                className="w-full py-3 mb-8 border-2 border-dashed border-[#C3D9CE] rounded-xl text-[#7D8F85] font-bold text-sm hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                Add Tax, SVC, or Missing Item
+              </button>
 
               <div className="flex gap-4 pt-6 border-t border-[#E8F2EC]">
                 <button 
