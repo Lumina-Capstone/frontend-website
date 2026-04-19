@@ -168,72 +168,75 @@ export default function Upload() {
   };
 
   return (
-    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
+    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-4 md:px-10 py-6 md:py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
       <div className="max-w-[1200px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col relative">
         
-        <header className="flex flex-col mb-12">
+        <header className="flex flex-col mb-8 md:mb-12">
           <h1 className="font-['Manrope',sans-serif] text-3xl md:text-4xl font-bold tracking-tight text-[#0B1A13]">OCR Upload</h1>
           <p className="text-[#4A5D52] text-sm mt-2 font-light max-w-lg">Digitalize and verify your physical farm records.</p>
         </header>
 
         {isVerifying && extractedData ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 items-start">
-            <div className="bg-white rounded-3xl border border-[#E8F2EC] p-6 shadow-sm sticky top-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-12 items-start">
+            <div className="bg-white rounded-3xl border border-[#E8F2EC] p-5 md:p-6 shadow-sm lg:sticky lg:top-8">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Original Receipt</span>
-                <button onClick={clearSelection} className="text-red-500 hover:text-red-700 text-sm font-bold transition-colors">Discard</button>
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Original Receipt</span>
+                <button onClick={clearSelection} className="text-red-500 hover:text-red-700 text-xs md:text-sm font-bold transition-colors">Discard</button>
               </div>
-              <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-y-auto max-h-[600px] no-scrollbar">
+              <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-y-auto max-h-[400px] md:max-h-[600px] no-scrollbar">
                 <img src={previewUrl!} alt="Original Receipt" className="w-full h-auto block" />
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl border border-[#E8F2EC] p-8 shadow-sm">
-              <div className="flex justify-between items-end mb-8">
+            <div className="bg-white rounded-3xl border border-[#E8F2EC] p-5 md:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6 md:mb-8">
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] text-2xl font-extrabold text-[#0B1A13]">Verify Extraction</h3>
-                  <p className="text-[#7D8F85] text-sm mt-1">Review and correct the detected items before saving.</p>
+                  <h3 className="font-['Manrope',sans-serif] text-xl md:text-2xl font-extrabold text-[#0B1A13]">Verify Extraction</h3>
+                  <p className="text-[#7D8F85] text-xs md:text-sm mt-1">Review and correct the detected items before saving.</p>
                 </div>
-                <div className="text-right">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-[#7D8F85] mb-1">Detected Total</span>
-                  <span className="font-bold text-xl text-emerald-600">{formatRupiah(extractedData.amount)}</span>
+                <div className="sm:text-right bg-emerald-50 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-emerald-100 sm:border-transparent">
+                  <span className="block text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-emerald-800 sm:text-[#7D8F85] mb-1">Detected Total</span>
+                  <span className="font-bold text-lg md:text-xl text-emerald-600">{formatRupiah(extractedData.amount)}</span>
                 </div>
               </div>
 
-              <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 no-scrollbar mb-4">
+              <div className="space-y-4 max-h-[400px] md:max-h-[450px] overflow-y-auto pr-1 md:pr-2 no-scrollbar mb-4">
                 {extractedData.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex gap-3 items-center bg-[#FDFBF7] p-3 rounded-xl border border-[#E8F2EC] relative group">
-                    <div className="w-16 shrink-0">
-                      <label className="block text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Qty</label>
-                      <input 
-                        type="number" 
-                        value={item.quantity || 1} 
-                        onChange={(e) => handleItemEdit(idx, 'quantity', parseInt(e.target.value) || 0)}
-                        className="w-full bg-white border border-[#E8F2EC] rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
-                      />
+                  <div key={idx} className="flex flex-col sm:flex-row gap-3 sm:items-center bg-[#FDFBF7] p-3 md:p-4 rounded-xl border border-[#E8F2EC] relative group">
+                    <div className="flex gap-3 w-full sm:w-auto flex-1">
+                      <div className="w-14 sm:w-16 shrink-0">
+                        <label className="block text-[9px] md:text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Qty</label>
+                        <input 
+                          type="number" 
+                          value={item.quantity || 1} 
+                          onChange={(e) => handleItemEdit(idx, 'quantity', parseInt(e.target.value) || 0)}
+                          className="w-full bg-white border border-[#E8F2EC] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:border-emerald-500 outline-none"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[9px] md:text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Item Description</label>
+                        <input 
+                          type="text" 
+                          value={item.item_name || item.name || ''} 
+                          onChange={(e) => handleItemEdit(idx, 'item_name', e.target.value)}
+                          className="w-full bg-white border border-[#E8F2EC] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:border-emerald-500 outline-none font-bold"
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Item Description</label>
-                      <input 
-                        type="text" 
-                        value={item.item_name || item.name || ''} 
-                        onChange={(e) => handleItemEdit(idx, 'item_name', e.target.value)}
-                        className="w-full bg-white border border-[#E8F2EC] rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none font-bold"
-                      />
-                    </div>
-                    <div className="w-32 shrink-0">
-                      <label className="block text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Price (Rp)</label>
+                    
+                    <div className="w-full sm:w-32 shrink-0">
+                      <label className="block text-[9px] md:text-[10px] font-bold uppercase text-[#7D8F85] mb-1">Price (Rp)</label>
                       <input 
                         type="number" 
                         value={item.price || item.sub_price || 0} 
                         onChange={(e) => handleItemEdit(idx, 'price', parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-[#E8F2EC] rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none text-right font-bold text-emerald-700"
+                        className="w-full bg-white border border-[#E8F2EC] rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none sm:text-right font-bold text-emerald-700"
                       />
                     </div>
 
                     <button 
                       onClick={() => handleRemoveItem(idx)} 
-                      className="absolute -right-2 -top-2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-500 hover:text-white"
+                      className="absolute -right-2 -top-2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-500 hover:text-white"
                       title="Remove Item"
                     >
                       <span className="material-symbols-outlined text-[14px]">close</span>
@@ -244,17 +247,17 @@ export default function Upload() {
 
               <button 
                 onClick={handleAddItem} 
-                className="w-full py-3 mb-8 border-2 border-dashed border-[#C3D9CE] rounded-xl text-[#7D8F85] font-bold text-sm hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 mb-6 md:mb-8 border-2 border-dashed border-[#C3D9CE] rounded-xl text-[#7D8F85] font-bold text-xs md:text-sm hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-lg">add_circle</span>
+                <span className="material-symbols-outlined text-[16px] md:text-lg">add_circle</span>
                 Add Tax, SVC, or Missing Item
               </button>
 
-              <div className="flex gap-4 pt-6 border-t border-[#E8F2EC]">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 border-t border-[#E8F2EC]">
                 <button 
                   onClick={handleAutoCorrect}
                   disabled={isAutoCorrecting || isSaving}
-                  className="px-6 py-4 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-3 md:py-4 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isAutoCorrecting ? (
                     <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Thinking...</>
@@ -266,10 +269,10 @@ export default function Upload() {
                 <button
                   onClick={handleConfirmSave}
                   disabled={isSaving || isAutoCorrecting}
-                  className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 bg-emerald-600 text-white py-3 md:py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
-                    <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Saving to Records...</>
+                    <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Saving...</>
                   ) : (
                     <><span className="material-symbols-outlined text-lg">check_circle</span> Save to Records</>
                   )}
@@ -281,38 +284,38 @@ export default function Upload() {
         ) : (
           <>
             <div className="mb-6 flex justify-center">
-              <div className="bg-white p-1 rounded-xl border border-[#E8F2EC] inline-flex shadow-sm">
-                <button onClick={() => setReceiptType('expenses')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${receiptType === 'expenses' ? 'bg-orange-50 text-orange-700 shadow-sm' : 'text-[#7D8F85] hover:text-[#0B1A13]'}`}>Expense Receipt</button>
-                <button onClick={() => setReceiptType('income')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${receiptType === 'income' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-[#7D8F85] hover:text-[#0B1A13]'}`}>Income Receipt</button>
+              <div className="bg-white p-1 rounded-xl border border-[#E8F2EC] inline-flex shadow-sm w-full max-w-[400px] sm:w-auto">
+                <button onClick={() => setReceiptType('expenses')} className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${receiptType === 'expenses' ? 'bg-orange-50 text-orange-700 shadow-sm' : 'text-[#7D8F85] hover:text-[#0B1A13]'}`}>Expense</button>
+                <button onClick={() => setReceiptType('income')} className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${receiptType === 'income' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-[#7D8F85] hover:text-[#0B1A13]'}`}>Income</button>
               </div>
             </div>
 
-            <section className="bg-white rounded-3xl border border-[#E8F2EC] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-12 max-w-4xl mx-auto w-full">
+            <section className="bg-white rounded-3xl border border-[#E8F2EC] p-5 md:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 md:mb-12 max-w-4xl mx-auto w-full">
               {!file ? (
-                <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`border-2 border-dashed rounded-2xl p-16 flex flex-col items-center justify-center text-center transition-all duration-200 ${isDragging ? 'border-emerald-500 bg-emerald-50' : 'border-[#C3D9CE] hover:border-emerald-400 hover:bg-[#FDFBF7]'}`}>
+                <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 md:p-16 flex flex-col items-center justify-center text-center transition-all duration-200 ${isDragging ? 'border-emerald-500 bg-emerald-50' : 'border-[#C3D9CE] hover:border-emerald-400 hover:bg-[#FDFBF7]'}`}>
                   <input type="file" accept="image/jpeg, image/png, image/jpg" className="hidden" ref={fileInputRef} onChange={handleFileInput} />
-                  <div className="w-20 h-20 bg-[#FDFBF7] border border-[#E8F2EC] shadow-sm rounded-full flex items-center justify-center mb-6">
-                    <span className="material-symbols-outlined text-4xl text-emerald-600">add_photo_alternate</span>
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-[#FDFBF7] border border-[#E8F2EC] shadow-sm rounded-full flex items-center justify-center mb-4 md:mb-6">
+                    <span className="material-symbols-outlined text-3xl md:text-4xl text-emerald-600">add_photo_alternate</span>
                   </div>
-                  <h4 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13] mb-2">Drag and drop your receipt here</h4>
-                  <p className="text-[#7D8F85] text-sm mb-8 max-w-sm">Supports JPG and PNG up to 10MB.</p>
-                  <button onClick={() => fileInputRef.current?.click()} className="bg-emerald-600 text-white px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-emerald-500 transition-all">
-                    <span className="material-symbols-outlined text-lg">folder_open</span> Browse Files
+                  <h4 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Drag and drop receipt</h4>
+                  <p className="text-[#7D8F85] text-xs md:text-sm mb-6 md:mb-8 max-w-sm">Supports JPG and PNG up to 10MB.</p>
+                  <button onClick={() => fileInputRef.current?.click()} className="bg-emerald-600 text-white px-6 md:px-8 py-3 md:py-3.5 rounded-full font-bold text-xs md:text-sm flex items-center gap-2 hover:bg-emerald-500 transition-all">
+                    <span className="material-symbols-outlined text-[16px] md:text-lg">folder_open</span> Browse Files
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center pt-4 pb-8">
-                  <div className="relative mb-8 max-w-sm w-full rounded-2xl overflow-hidden shadow-lg border border-[#E8F2EC]">
-                    <img src={previewUrl!} alt="Receipt preview" className="w-full h-auto max-h-[400px] object-contain bg-slate-50" />
+                <div className="flex flex-col items-center pt-2 md:pt-4 pb-6 md:pb-8">
+                  <div className="relative mb-6 md:mb-8 max-w-sm w-full rounded-2xl overflow-hidden shadow-lg border border-[#E8F2EC]">
+                    <img src={previewUrl!} alt="Receipt preview" className="w-full h-auto max-h-[300px] md:max-h-[400px] object-contain bg-slate-50" />
                     <button onClick={clearSelection} disabled={isUploading} className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-[#1A2E22] hover:bg-white hover:text-red-500 shadow-sm transition-colors disabled:opacity-50">
                       <span className="material-symbols-outlined text-sm">close</span>
                     </button>
                   </div>
-                  <div className="text-center mb-8">
-                    <p className="font-bold text-[#0B1A13]">{file.name}</p>
-                    <p className="text-xs text-[#7D8F85] mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <div className="text-center mb-6 md:mb-8">
+                    <p className="font-bold text-sm md:text-base text-[#0B1A13] px-4 truncate max-w-[300px]">{file.name}</p>
+                    <p className="text-[10px] md:text-xs text-[#7D8F85] mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button onClick={handleUpload} disabled={isUploading} className="w-full max-w-sm bg-emerald-600 text-white py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 disabled:opacity-50 flex items-center justify-center gap-2">
+                  <button onClick={handleUpload} disabled={isUploading} className="w-full max-w-sm bg-emerald-600 text-white py-3.5 md:py-4 rounded-xl font-bold transition-all shadow-sm hover:bg-emerald-500 disabled:opacity-50 flex items-center justify-center gap-2 text-sm md:text-base">
                     {isUploading ? <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Processing OCR...</> : <><span className="material-symbols-outlined text-lg">memory</span> Extract {receiptType === 'income' ? 'Income' : 'Expense'} Data</>}
                   </button>
                 </div>
@@ -321,29 +324,29 @@ export default function Upload() {
           </>
         )}
 
-        <footer className="mt-auto w-full flex flex-col md:flex-row justify-between items-center py-8 border-t border-[#E8F2EC]">
+        <footer className="mt-auto w-full flex flex-col md:flex-row justify-between items-center py-6 md:py-8 border-t border-[#E8F2EC]">
           <div className="mb-4 md:mb-0">
-            <p className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
+            <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
           </div>
-          <div className="flex gap-8">
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
+          <div className="flex gap-6 md:gap-8">
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
           </div>
         </footer>
 
       </div>
 
       {toast && (
-        <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
+        <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:bottom-8 md:right-8 px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
           toast.type === 'success' 
             ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
             : 'bg-red-50 text-red-800 border-red-200'
         }`}>
-          <span className="material-symbols-outlined">
+          <span className="material-symbols-outlined text-lg md:text-xl">
             {toast.type === 'success' ? 'check_circle' : 'error'}
           </span>
-          <span className="font-bold text-sm">{toast.message}</span>
+          <span className="font-bold text-xs md:text-sm">{toast.message}</span>
         </div>
       )}
 

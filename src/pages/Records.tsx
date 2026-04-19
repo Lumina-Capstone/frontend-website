@@ -108,16 +108,16 @@ export default function Records() {
   }
 
   return (
-    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-6 md:px-10 py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
+    <div className="bg-[#FDFBF7] text-[#1A2E22] font-['Inter',sans-serif] min-h-screen px-4 md:px-10 py-6 md:py-8 selection:bg-[#D1E8DA] selection:text-[#0B1A13]">
       <div className="max-w-[1300px] mx-auto min-h-[calc(100vh-4rem)] flex flex-col relative">
         
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-10">
           <div>
             <h1 className="font-['Manrope',sans-serif] text-3xl md:text-4xl font-bold tracking-tight text-[#0B1A13]">Financial Ledger</h1>
             <p className="text-[#4A5D52] text-sm mt-2 font-light max-w-lg">Track all OCR-processed income and expenses to monitor your farm's cash flow.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 items-center w-full md:w-auto">
             <div className="relative w-full sm:w-auto">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#7D8F85] text-lg">search</span>
               <input
@@ -139,12 +139,12 @@ export default function Records() {
           </div>
         </header>
 
-        <div className="flex gap-2 mb-6 border-b border-[#E8F2EC] pb-px">
+        <div className="flex gap-2 mb-6 border-b border-[#E8F2EC] pb-px overflow-x-auto no-scrollbar">
           {['All', 'Income', 'Expense'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
-              className={`px-5 py-2.5 text-sm font-bold rounded-t-xl transition-colors relative ${
+              className={`px-5 py-2.5 text-sm font-bold rounded-t-xl transition-colors relative whitespace-nowrap ${
                 activeTab === tab 
                   ? 'text-emerald-600 bg-white border-t border-l border-r border-[#E8F2EC]' 
                   : 'text-[#7D8F85] hover:text-[#0B1A13] hover:bg-white/50'
@@ -159,16 +159,16 @@ export default function Records() {
         </div>
 
         <section className="bg-white rounded-b-3xl rounded-tr-3xl border border-[#E8F2EC] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex-1">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead className="bg-[#FDFBF7]/50 border-b border-[#E8F2EC]">
                 <tr className="text-[#7D8F85] text-xs font-bold uppercase tracking-wider">
-                  <th className="py-5 px-8 w-10"></th> 
-                  <th className="py-5 px-4">Date</th>
-                  <th className="py-5 px-6">Summary</th>
-                  <th className="py-5 px-6">Category</th>
-                  <th className="py-5 px-6">Status</th>
-                  <th className="py-5 px-8 text-right">Amount</th>
+                  <th className="py-4 md:py-5 px-4 md:px-8 w-10"></th> 
+                  <th className="py-4 md:py-5 px-4">Date</th>
+                  <th className="py-4 md:py-5 px-4 md:px-6">Summary</th>
+                  <th className="py-4 md:py-5 px-4 md:px-6">Category</th>
+                  <th className="py-4 md:py-5 px-4 md:px-6">Status</th>
+                  <th className="py-4 md:py-5 px-4 md:px-8 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8F2EC]">
@@ -179,21 +179,21 @@ export default function Records() {
                         onClick={() => toggleExpand(record.id)}
                         className="group hover:bg-[#FDFBF7] transition-colors cursor-pointer"
                       >
-                        <td className="py-5 pl-8 pr-4 text-[#7D8F85]">
+                        <td className="py-4 md:py-5 pl-4 md:pl-8 pr-2 md:pr-4 text-[#7D8F85]">
                            <span className={`material-symbols-outlined transition-transform duration-200 ${expandedId === record.id ? 'rotate-180' : ''}`}>
                              expand_more
                            </span>
                         </td>
-                        <td className="py-5 px-4 text-sm font-medium text-[#4A5D52]">
+                        <td className="py-4 md:py-5 px-4 text-xs md:text-sm font-medium text-[#4A5D52]">
                           {formatDate(record.date)}
                         </td>
-                        <td className="py-5 px-6">
-                          <p className="font-bold text-[#0B1A13] text-sm">
+                        <td className="py-4 md:py-5 px-4 md:px-6">
+                          <p className="font-bold text-[#0B1A13] text-xs md:text-sm">
                             {record.items && record.items.length > 1 ? `${record.items.length} Items` : (record.itemName || 'Unknown Item')}
                           </p>
                         </td>
-                        <td className="py-5 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${
+                        <td className="py-4 md:py-5 px-4 md:px-6">
+                          <span className={`inline-flex items-center px-2 py-1 md:px-2.5 md:py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-widest border ${
                             record.category === 'Income' 
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
                               : 'bg-orange-50 text-orange-700 border-orange-100'
@@ -201,9 +201,9 @@ export default function Records() {
                             {record.category || 'Uncategorized'}
                           </span>
                         </td>
-                        <td className="py-5 px-6">
-                          <div className="flex items-center gap-1.5 text-[#7D8F85] text-xs font-medium">
-                            <span className={`material-symbols-outlined text-[16px] ${
+                        <td className="py-4 md:py-5 px-4 md:px-6">
+                          <div className="flex items-center gap-1 md:gap-1.5 text-[#7D8F85] text-[10px] md:text-xs font-medium">
+                            <span className={`material-symbols-outlined text-[14px] md:text-[16px] ${
                               record.status === 'Verified' ? 'text-emerald-500' : 'text-yellow-500'
                             }`}>
                               {record.status === 'Verified' ? 'check_circle' : 'pending'}
@@ -211,7 +211,7 @@ export default function Records() {
                             {record.status || 'Pending'}
                           </div>
                         </td>
-                        <td className={`py-5 px-8 text-right font-['Manrope',sans-serif] font-extrabold text-base ${
+                        <td className={`py-4 md:py-5 px-4 md:px-8 text-right font-['Manrope',sans-serif] font-extrabold text-sm md:text-base ${
                           record.category === 'Income' ? 'text-emerald-600' : 'text-[#0B1A13]'
                         }`}>
                           {record.category === 'Income' ? '+' : '-'}{formatRupiah(Number(record.amount || 0))}
@@ -220,52 +220,52 @@ export default function Records() {
 
                       {expandedId === record.id && (
                         <tr className="bg-[#FDFBF7]">
-                          <td colSpan={6} className="py-6 px-8 lg:px-12 border-b border-[#E8F2EC]">
-                            <div className="bg-white rounded-xl border border-[#E8F2EC] p-5 shadow-sm">
+                          <td colSpan={6} className="py-4 md:py-6 px-4 md:px-8 lg:px-12 border-b border-[#E8F2EC]">
+                            <div className="bg-white rounded-xl border border-[#E8F2EC] p-4 md:p-5 shadow-sm">
                               
-                              <div className="flex justify-between items-start mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Record Details</h4>
+                              <div className="flex justify-between items-start mb-4 md:mb-6">
+                                <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#7D8F85]">Record Details</h4>
                                 <button 
                                   onClick={() => setRecordToDelete(record.id)}
-                                  className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-all shadow-sm"
+                                  className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-[11px] uppercase tracking-widest font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-500 hover:text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg transition-all shadow-sm"
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">delete</span>
+                                  <span className="material-symbols-outlined text-[12px] md:text-[14px]">delete</span>
                                   Delete
                                 </button>
                               </div>
                               
-                              <div className="flex flex-col lg:flex-row gap-8">
+                              <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
                                 {(record.image_url || record.imageUrl) && (
                                   <div className="w-full lg:w-1/3 flex-shrink-0">
-                                    <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-hidden flex justify-center max-h-[500px]">
+                                    <div className="bg-slate-50 rounded-xl border border-[#E8F2EC] overflow-hidden flex justify-center max-h-[300px] md:max-h-[500px]">
                                       <img 
                                         src={record.image_url || record.imageUrl} 
                                         alt="Original Receipt" 
                                         className="object-contain w-full h-auto"
                                       />
                                     </div>
-                                    <p className="text-center text-[10px] uppercase font-bold text-[#7D8F85] tracking-widest mt-3">Original Image Reference</p>
+                                    <p className="text-center text-[9px] md:text-[10px] uppercase font-bold text-[#7D8F85] tracking-widest mt-3">Original Image Reference</p>
                                   </div>
                                 )}
 
-                                <div className={`w-full ${record.image_url || record.imageUrl ? 'lg:w-2/3' : ''}`}>
+                                <div className={`w-full overflow-x-auto ${record.image_url || record.imageUrl ? 'lg:w-2/3' : ''}`}>
                                   {record.items && record.items.length > 0 ? (
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-xs md:text-sm min-w-[300px]">
                                       <thead>
                                         <tr className="text-[#7D8F85] border-b border-[#E8F2EC] text-left">
-                                          <th className="pb-3 font-medium w-16">Qty</th>
-                                          <th className="pb-3 font-medium">Item Name</th>
-                                          <th className="pb-3 text-right font-medium">Price</th>
+                                          <th className="pb-2 md:pb-3 font-medium w-10 md:w-16">Qty</th>
+                                          <th className="pb-2 md:pb-3 font-medium">Item Name</th>
+                                          <th className="pb-2 md:pb-3 text-right font-medium">Price</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-[#E8F2EC]/50">
                                         {record.items.map((item: any, i: number) => (
                                           <tr key={i}>
-                                            <td className="py-3.5 text-[#4A5D52]">{item.quantity || 1}x</td>
-                                            <td className="py-3.5 font-bold text-[#0B1A13]">
+                                            <td className="py-2.5 md:py-3.5 text-[#4A5D52]">{item.quantity || 1}x</td>
+                                            <td className="py-2.5 md:py-3.5 font-bold text-[#0B1A13]">
                                               {item.item_name || item.name || item.itemName || 'Unknown Item'}
                                             </td>
-                                            <td className="py-3.5 text-right font-bold text-[#0B1A13]">
+                                            <td className="py-2.5 md:py-3.5 text-right font-bold text-[#0B1A13]">
                                               {formatRupiah(item.sub_price || item.price || 0)}
                                             </td>
                                           </tr>
@@ -273,16 +273,16 @@ export default function Records() {
                                       </tbody>
                                       <tfoot className="border-t-2 border-[#E8F2EC]">
                                         <tr>
-                                          <td colSpan={2} className="py-4 text-right text-[#7D8F85] font-bold text-xs uppercase tracking-widest">Total</td>
-                                          <td className="py-4 text-right font-bold text-[#0B1A13] text-base">{formatRupiah(Number(record.amount || 0))}</td>
+                                          <td colSpan={2} className="py-3 md:py-4 text-right text-[#7D8F85] font-bold text-[10px] md:text-xs uppercase tracking-widest">Total</td>
+                                          <td className="py-3 md:py-4 text-right font-bold text-[#0B1A13] text-sm md:text-base">{formatRupiah(Number(record.amount || 0))}</td>
                                         </tr>
                                       </tfoot>
                                     </table>
                                   ) : (
-                                    <div className="text-sm text-[#4A5D52] p-4 bg-slate-50 rounded-lg border border-[#E8F2EC]">
+                                    <div className="text-xs md:text-sm text-[#4A5D52] p-3 md:p-4 bg-slate-50 rounded-lg border border-[#E8F2EC]">
                                       <p className="font-bold text-[#0B1A13]">{record.itemName}</p>
-                                      <p className="text-xs text-[#7D8F85] mt-2 italic flex items-center gap-1.5">
-                                        <span className="material-symbols-outlined text-[14px]">info</span>
+                                      <p className="text-[10px] md:text-xs text-[#7D8F85] mt-1 md:mt-2 italic flex items-center gap-1 md:gap-1.5">
+                                        <span className="material-symbols-outlined text-[12px] md:text-[14px]">info</span>
                                         Only summary data available for this record.
                                       </p>
                                     </div>
@@ -298,7 +298,7 @@ export default function Records() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-[#7D8F85]">
+                    <td colSpan={6} className="py-12 md:py-16 text-center text-[#7D8F85]">
                       <span className="material-symbols-outlined text-4xl mb-3 text-[#C3D9CE]">receipt_long</span>
                       <p className="font-bold text-lg text-[#0B1A13]">No records found</p>
                       <p className="text-sm mt-1">Try adjusting your filters or upload a new receipt.</p>
@@ -310,14 +310,14 @@ export default function Records() {
           </div>
         </section>
 
-        <footer className="mt-12 w-full flex flex-col md:flex-row justify-between items-center py-8 border-t border-[#E8F2EC]">
+        <footer className="mt-8 md:mt-12 w-full flex flex-col md:flex-row justify-between items-center py-6 md:py-8 border-t border-[#E8F2EC]">
           <div className="flex flex-col items-center md:items-start mb-4 md:mb-0">
-            <p className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
+            <p className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold">© 2026 Lumina Tech. All rights reserved.</p>
           </div>
-          <div className="flex gap-8">
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
-            <a href="#" className="text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
+          <div className="flex gap-6 md:gap-8">
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Privacy</a>
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Terms</a>
+            <a href="#" className="text-[10px] md:text-xs uppercase tracking-widest text-[#7D8F85] font-bold hover:text-emerald-600 transition-colors">Contact</a>
           </div>
         </footer>
 
@@ -325,25 +325,25 @@ export default function Records() {
 
       {recordToDelete && (
         <div className="fixed inset-0 bg-[#0B1A13]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-[#E8F2EC] text-center">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
-              <span className="material-symbols-outlined text-3xl text-red-500">warning</span>
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 md:p-8 shadow-2xl border border-[#E8F2EC] text-center">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5">
+              <span className="material-symbols-outlined text-2xl md:text-3xl text-red-500">warning</span>
             </div>
-            <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13] mb-2">Delete Record?</h3>
-            <p className="text-[#4A5D52] text-sm mb-8">This action cannot be undone. Are you sure you want to permanently remove this record from your ledger?</p>
+            <h3 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Delete Record?</h3>
+            <p className="text-[#4A5D52] text-xs md:text-sm mb-6 md:mb-8">This action cannot be undone. Are you sure you want to permanently remove this record from your ledger?</p>
             
             <div className="flex gap-3">
               <button 
                 onClick={() => setRecordToDelete(null)}
                 disabled={isDeleting}
-                className="flex-1 py-3 border border-[#E8F2EC] bg-white rounded-xl text-[#4A5D52] font-bold hover:bg-[#FDFBF7] transition-colors"
+                className="flex-1 py-2.5 md:py-3 border border-[#E8F2EC] bg-white rounded-xl text-[#4A5D52] text-sm md:text-base font-bold hover:bg-[#FDFBF7] transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={confirmDelete}
                 disabled={isDeleting}
-                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 hover:shadow-lg hover:shadow-red-600/20 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
+                className="flex-1 py-2.5 md:py-3 bg-red-600 text-white rounded-xl text-sm md:text-base font-bold hover:bg-red-500 hover:shadow-lg hover:shadow-red-600/20 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
               >
                 {isDeleting ? (
                   <><span className="material-symbols-outlined animate-spin text-sm">autorenew</span> Deleting...</>
@@ -355,15 +355,15 @@ export default function Records() {
       )}
 
       {toast && (
-        <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
+        <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:bottom-8 md:right-8 px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
           toast.type === 'success' 
             ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
             : 'bg-red-50 text-red-800 border-red-200'
         }`}>
-          <span className="material-symbols-outlined">
+          <span className="material-symbols-outlined text-lg md:text-xl">
             {toast.type === 'success' ? 'check_circle' : 'error'}
           </span>
-          <span className="font-bold text-sm">{toast.message}</span>
+          <span className="font-bold text-xs md:text-sm">{toast.message}</span>
         </div>
       )}
 
