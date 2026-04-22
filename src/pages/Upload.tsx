@@ -20,6 +20,11 @@ export default function Upload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const [isCameraMode, setIsCameraMode] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
@@ -28,6 +33,59 @@ export default function Upload() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  const startCamera = async () => {
+    setIsCameraMode(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }, 
+        audio: false
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Camera error:", err);
+      setToast({ message: "Camera permission denied or unavailable. Please check browser settings.", type: 'error' });
+      setIsCameraMode(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraMode(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const capturedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+          handleFileSelect(capturedFile);
+          stopCamera(); 
+        }
+      }, 'image/jpeg', 0.9);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
@@ -290,21 +348,65 @@ export default function Upload() {
               </div>
             </div>
 
-            <section className="bg-white rounded-3xl border border-[#E8F2EC] p-5 md:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 md:mb-12 max-w-4xl mx-auto w-full">
-              {!file ? (
+            <section className="bg-white rounded-3xl border border-[#E8F2EC] p-5 md:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 md:mb-12 max-w-4xl mx-auto w-full min-h-[400px] flex flex-col justify-center">
+              
+              {isCameraMode ? (
+                <div className="flex flex-col items-center w-full max-w-2xl mx-auto animate-in fade-in duration-300">
+                  <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-lg border border-[#E8F2EC] mb-6 flex justify-center bg-slate-900 min-h-[300px] md:min-h-[400px]">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      className="w-full h-auto max-h-[500px] object-contain"
+                    />
+                    
+                    <div className="absolute inset-8 border-2 border-emerald-500/50 rounded-xl pointer-events-none">
+                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-xl"></div>
+                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-xl"></div>
+                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-xl"></div>
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-xl"></div>
+                    </div>
+                  </div>
+                  
+                  <canvas ref={canvasRef} className="hidden" />
+
+                  <div className="flex gap-4 w-full">
+                    <button 
+                      onClick={stopCamera} 
+                      className="flex-1 bg-white border border-[#C3D9CE] text-[#0B1A13] py-3.5 rounded-full font-bold text-sm hover:bg-[#FDFBF7] transition-all shadow-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={capturePhoto} 
+                      className="flex-[2] bg-emerald-600 text-white py-3.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-500 transition-all shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-lg">photo_camera</span> Capture Receipt
+                    </button>
+                  </div>
+                </div>
+              ) : !file ? (
                 <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 md:p-16 flex flex-col items-center justify-center text-center transition-all duration-200 ${isDragging ? 'border-emerald-500 bg-emerald-50' : 'border-[#C3D9CE] hover:border-emerald-400 hover:bg-[#FDFBF7]'}`}>
                   <input type="file" accept="image/jpeg, image/png, image/jpg" className="hidden" ref={fileInputRef} onChange={handleFileInput} />
+                  
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-[#FDFBF7] border border-[#E8F2EC] shadow-sm rounded-full flex items-center justify-center mb-4 md:mb-6">
                     <span className="material-symbols-outlined text-3xl md:text-4xl text-emerald-600">add_photo_alternate</span>
                   </div>
-                  <h4 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Drag and drop receipt</h4>
+                  <h4 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Upload or scan receipt</h4>
                   <p className="text-[#7D8F85] text-xs md:text-sm mb-6 md:mb-8 max-w-sm">Supports JPG and PNG up to 10MB.</p>
-                  <button onClick={() => fileInputRef.current?.click()} className="bg-emerald-600 text-white px-6 md:px-8 py-3 md:py-3.5 rounded-full font-bold text-xs md:text-sm flex items-center gap-2 hover:bg-emerald-500 transition-all">
-                    <span className="material-symbols-outlined text-[16px] md:text-lg">folder_open</span> Browse Files
-                  </button>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs md:max-w-md mx-auto">
+                    <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-white border border-[#C3D9CE] text-[#0B1A13] px-6 py-3 md:py-3.5 rounded-full font-bold text-xs md:text-sm flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-600 transition-all shadow-sm">
+                      <span className="material-symbols-outlined text-[16px] md:text-lg">folder_open</span> Browse Files
+                    </button>
+                    
+                    <button onClick={startCamera} className="flex-1 bg-emerald-600 text-white px-6 py-3 md:py-3.5 rounded-full font-bold text-xs md:text-sm flex items-center justify-center gap-2 hover:bg-emerald-500 transition-all shadow-sm">
+                      <span className="material-symbols-outlined text-[16px] md:text-lg">photo_camera</span> Use Camera
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center pt-2 md:pt-4 pb-6 md:pb-8">
+                <div className="flex flex-col items-center pt-2 md:pt-4 pb-6 md:pb-8 animate-in fade-in duration-300 w-full">
                   <div className="relative mb-6 md:mb-8 max-w-sm w-full rounded-2xl overflow-hidden shadow-lg border border-[#E8F2EC]">
                     <img src={previewUrl!} alt="Receipt preview" className="w-full h-auto max-h-[300px] md:max-h-[400px] object-contain bg-slate-50" />
                     <button onClick={clearSelection} disabled={isUploading} className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-[#1A2E22] hover:bg-white hover:text-red-500 shadow-sm transition-colors disabled:opacity-50">
