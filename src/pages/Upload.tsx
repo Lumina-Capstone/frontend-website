@@ -25,6 +25,9 @@ export default function Upload() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [hasFlash, setHasFlash] = useState(false);
+  const [isFlashOn, setIsFlashOn] = useState(false);
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
@@ -51,6 +54,15 @@ export default function Upload() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+
+      const videoTrack = stream.getVideoTracks()[0];
+      const capabilities = videoTrack.getCapabilities?.();
+      if (capabilities && ('torch' in capabilities)) {
+        setHasFlash(true);
+      } else {
+        setHasFlash(false);
+      }
+
     } catch (err) {
       console.error("Camera error:", err);
       setToast({ message: "Camera permission denied or unavailable. Please check browser settings.", type: 'error' });
@@ -64,6 +76,23 @@ export default function Upload() {
       streamRef.current = null;
     }
     setIsCameraMode(false);
+    setIsFlashOn(false);
+    setHasFlash(false);
+  };
+
+  const toggleFlash = async () => {
+    if (!streamRef.current) return;
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    try {
+      const newFlashState = !isFlashOn;
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: newFlashState } as any]
+      });
+      setIsFlashOn(newFlashState);
+    } catch (err) {
+      console.error("Failed to toggle flash:", err);
+      setToast({ message: "Could not toggle flashlight.", type: 'error' });
+    }
   };
 
   const capturePhoto = () => {
@@ -366,6 +395,23 @@ export default function Upload() {
                       <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-xl"></div>
                       <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-xl"></div>
                     </div>
+
+                    {hasFlash && (
+                      <button
+                        onClick={toggleFlash}
+                        className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center border transition-all shadow-sm ${
+                          isFlashOn 
+                            ? 'bg-emerald-500 text-white border-emerald-400' 
+                            : 'bg-black/50 backdrop-blur-md text-white border-white/20 hover:bg-black/70'
+                        }`}
+                        title="Toggle Flashlight"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          {isFlashOn ? 'flash_on' : 'flash_off'}
+                        </span>
+                      </button>
+                    )}
+
                   </div>
                   
                   <canvas ref={canvasRef} className="hidden" />
