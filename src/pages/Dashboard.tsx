@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Legend
 } from 'recharts';
 
 const formatDate = (dateStr: string) => {
@@ -13,6 +14,8 @@ const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space';
 
 export default function Dashboard() {
   const [productions, setProductions] = useState<any[]>([]);
+  const [financialRecords, setFinancialRecords] = useState<any[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -35,16 +38,36 @@ export default function Dashboard() {
         setProductions([]); 
       }
     } catch (error) {
-      console.error("Failed to fetch from backend:", error);
+      console.error("Failed to fetch productions:", error);
       setProductions([]); 
     } finally {
       if (showSpinner) setIsLoading(false);
     }
   }, []);
 
+  const fetchFinancials = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/records/`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.records)) {
+        setFinancialRecords(data.records);
+      } else if (Array.isArray(data)) {
+        setFinancialRecords(data);
+      } else {
+        setFinancialRecords([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch financials:", error);
+      setFinancialRecords([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProductions(true);
-  }, [fetchProductions]);
+    fetchFinancials();
+  }, [fetchProductions, fetchFinancials]);
 
   const stats = useMemo(() => {
     if (!productions || productions.length === 0) {
@@ -92,6 +115,39 @@ export default function Dashboard() {
 
     return { total, todayCount, dailyChange, avg, maxEntry, weeklyGrowth, consistency, chartData };
   }, [productions]);
+
+  const financialChartData = useMemo(() => {
+    if (!financialRecords || financialRecords.length === 0) return [];
+
+    const grouped = financialRecords.reduce((acc: any, record: any) => {
+      if (!record.date) return acc;
+      
+      const dateKey = record.date.split('T')[0]; 
+      
+      if (!acc[dateKey]) {
+        acc[dateKey] = { 
+          fullDate: dateKey, 
+          name: formatDate(dateKey), 
+          income: 0, 
+          expense: 0 
+        };
+      }
+
+      const amount = Number(record.amount || 0);
+      if (record.category === 'Income') {
+        acc[dateKey].income += amount;
+      } else if (record.category === 'Expense') {
+        acc[dateKey].expense += amount;
+      }
+      
+      return acc;
+    }, {});
+
+    return Object.values(grouped)
+      .sort((a: any, b: any) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime())
+      .slice(-14);
+
+  }, [financialRecords]);
 
   const handleAddProduction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,6 +334,55 @@ export default function Dashboard() {
                 <span className="material-symbols-outlined text-4xl mb-2 text-[#C3D9CE]">monitoring</span>
                 <p className="font-medium">No data available to chart.</p>
                 <p className="text-xs mt-1">Add a production record to see trends.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-[#E8F2EC] p-6 md:p-8 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="mb-6 flex justify-between items-end">
+            <div>
+              <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-[#0B1A13]">Cash Flow Overview</h3>
+              <p className="text-[#7D8F85] text-sm font-medium mt-1">Daily Income vs Expenses</p>
+            </div>
+            <Link to="/records" className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-100">
+              View Ledger →
+            </Link>
+          </div>
+          <div className="h-[420px] w-full">
+            {financialChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={financialChartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }} barGap={8}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8F2EC" vertical={false} opacity={0.6} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#7D8F85', fontFamily: 'Inter' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    dx={-10} 
+                    tickFormatter={(val) => `Rp ${(val/1000).toLocaleString()}`} 
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#11241A', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '10px 14px', color: '#fff' }}
+                    itemStyle={{ fontWeight: 'bold' }}
+                    labelStyle={{ color: '#C3D9CE', fontSize: '12px', marginBottom: '4px' }}
+                    formatter={(value: any) => [`Rp ${value.toLocaleString()}`, undefined]}
+                    labelFormatter={(label, payload) => payload?.[0]?.payload.fullDate || label}
+                    cursor={{ fill: '#FDFBF7' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 'bold', color: '#4A5D52' }} 
+                    iconType="circle"
+                  />
+                  <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="expense" name="Expense" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-[#7D8F85] bg-[#FDFBF7]/50 rounded-2xl border border-dashed border-[#E8F2EC]">
+                <span className="material-symbols-outlined text-4xl mb-2 text-[#C3D9CE]">receipt_long</span>
+                <p className="font-medium">No financial data available yet.</p>
+                <p className="text-xs mt-1">Upload an Income or Expense receipt to see your cash flow.</p>
               </div>
             )}
           </div>
