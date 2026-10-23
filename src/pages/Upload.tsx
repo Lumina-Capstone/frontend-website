@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
 import Toast, { type ToastState } from '../components/Toast';
 import { editItem, removeItem, type LineItem } from '../utils/lineItems';
+import { prepareReceiptImage } from '../utils/imageResize';
 import { apiFetch } from '../services/apiClient';
 
 export default function Upload() {
@@ -144,10 +145,12 @@ export default function Upload() {
   const handleUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
     try {
+      const uploadFile = await prepareReceiptImage(file);
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+
       const response = await apiFetch(`/ocr/${receiptType}`, {
         method: 'POST',
         body: formData,
