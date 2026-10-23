@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
 import Toast, { type ToastState } from '../components/Toast';
+import { editItem, removeItem, type LineItem } from '../utils/lineItems';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
@@ -168,38 +169,24 @@ export default function Upload() {
   };
 
   const handleItemEdit = (index: number, field: string, value: any) => {
-    const updatedData = { ...extractedData };
-    updatedData.items[index][field] = value;
-
-    const item = updatedData.items[index];
-    const qty = Number(item.quantity) || 1;
-    const price = Number(item.price) || 0;
-    item.sub_price = qty * price;
-
-    const newTotal = updatedData.items.reduce((sum: number, it: any) => {
-      return sum + (Number(it.sub_price) || (Number(it.quantity || 1) * Number(it.price || 0)));
-    }, 0);
-    updatedData.amount = newTotal;
-
-    setExtractedData(updatedData);
+    setExtractedData((prev: any) => {
+      const result = editItem(prev.items, index, field as keyof LineItem, value);
+      return { ...prev, items: result.items, amount: result.amount };
+    });
   };
 
   const handleAddItem = () => {
-    const updatedData = { ...extractedData };
-    updatedData.items.push({ quantity: 1, item_name: '', price: 0, sub_price: 0 });
-    setExtractedData(updatedData);
+    setExtractedData((prev: any) => ({
+      ...prev,
+      items: [...prev.items, { quantity: 1, item_name: '', price: 0, sub_price: 0 }],
+    }));
   };
 
   const handleRemoveItem = (index: number) => {
-    const updatedData = { ...extractedData };
-    updatedData.items.splice(index, 1);
-
-    const newTotal = updatedData.items.reduce((sum: number, item: any) => {
-      return sum + (Number(item.sub_price) || (Number(item.quantity || 1) * Number(item.price || 0)));
-    }, 0);
-    updatedData.amount = newTotal;
-
-    setExtractedData(updatedData);
+    setExtractedData((prev: any) => {
+      const result = removeItem(prev.items, index);
+      return { ...prev, items: result.items, amount: result.amount };
+    });
   };
 
   const handleAutoCorrect = async () => {
