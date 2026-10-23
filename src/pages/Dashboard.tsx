@@ -5,13 +5,12 @@ import {
   LineChart, Line, Legend
 } from 'recharts';
 import { formatRupiah } from '../utils/formatRupiah';
+import { apiFetch } from '../services/apiClient';
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
-
-const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space';
 
 export default function Dashboard() {
   const [productions, setProductions] = useState<any[]>([]);
@@ -26,7 +25,7 @@ export default function Dashboard() {
   const fetchProductions = useCallback(async (showSpinner = true) => {
     if (showSpinner) setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/produksi`);
+      const response = await apiFetch('/produksi');
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       
@@ -47,7 +46,7 @@ export default function Dashboard() {
 
   const fetchFinancials = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/records/`);
+      const response = await apiFetch('/records/');
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       
@@ -130,7 +129,7 @@ export default function Dashboard() {
     const newRecord = { date: newDate, count: parseInt(newCount) };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/produksi`, {
+      const response = await apiFetch(`/produksi`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord),

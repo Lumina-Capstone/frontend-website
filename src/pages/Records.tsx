@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
 import ConfirmDialog from '../components/ConfirmDialog';
 import Toast, { type ToastState } from '../components/Toast';
-
-const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
+import { apiFetch } from '../services/apiClient';
 
 export default function Records() {
   const [records, setRecords] = useState<any[]>([]);
@@ -22,7 +21,7 @@ export default function Records() {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}records/`); 
+        const response = await apiFetch('/records/'); 
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         
@@ -49,7 +48,7 @@ export default function Records() {
     
     setIsDeleting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}records/${recordToDelete}`, {
+      const response = await apiFetch(`/records/${recordToDelete}`, {
         method: 'DELETE',
       });
 

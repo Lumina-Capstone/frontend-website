@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
 import Toast, { type ToastState } from '../components/Toast';
 import { editItem, removeItem, type LineItem } from '../utils/lineItems';
-
-const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
+import { apiFetch } from '../services/apiClient';
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
@@ -149,7 +148,7 @@ export default function Upload() {
     formData.append('file', file);
 
     try {
-      const response = await fetch(`${API_BASE_URL}ocr/${receiptType}`, {
+      const response = await apiFetch(`/ocr/${receiptType}`, {
         method: 'POST',
         body: formData,
       });
@@ -192,7 +191,7 @@ export default function Upload() {
   const handleAutoCorrect = async () => {
     setIsAutoCorrecting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}ocr/autocorrect`, {
+      const response = await apiFetch(`/ocr/autocorrect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(extractedData),
@@ -215,7 +214,7 @@ export default function Upload() {
   const handleConfirmSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch(`${API_BASE_URL}ocr/save`, {
+      const response = await apiFetch(`/ocr/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(extractedData),
