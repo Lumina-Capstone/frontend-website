@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatRupiah } from '../utils/formatRupiah';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
@@ -252,11 +253,6 @@ export default function Upload() {
       setToast({ message: "Failed to save the verified data.", type: 'error' });
       setIsSaving(false);
     }
-  };
-
-  const formatRupiah = (value: number) => {
-    if (isNaN(value)) return 'Rp 0';
-    return 'Rp ' + Number(value).toLocaleString('en-US');
   };
 
   return (

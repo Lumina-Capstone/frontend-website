@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { formatRupiah } from '../utils/formatRupiah';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
@@ -85,14 +86,6 @@ export default function Records() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const formatRupiah = (value: number) => {
-    if (isNaN(value)) return 'Rp 0.00';
-    return 'Rp ' + Number(value).toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    });
   };
 
   const toggleExpand = (id: string) => {
@@ -214,7 +207,7 @@ export default function Records() {
                         <td className={`py-4 md:py-5 px-4 md:px-8 text-right font-['Manrope',sans-serif] font-extrabold text-sm md:text-base ${
                           record.category === 'Income' ? 'text-emerald-600' : 'text-[#0B1A13]'
                         }`}>
-                          {record.category === 'Income' ? '+' : '-'}{formatRupiah(Number(record.amount || 0))}
+                          {record.category === 'Income' ? '+' : '-'}{formatRupiah(Number(record.amount || 0), { decimals: 2 })}
                         </td>
                       </tr>
 
@@ -266,7 +259,7 @@ export default function Records() {
                                               {item.item_name || item.name || item.itemName || 'Unknown Item'}
                                             </td>
                                             <td className="py-2.5 md:py-3.5 text-right font-bold text-[#0B1A13]">
-                                              {formatRupiah(item.sub_price || item.price || 0)}
+                                              {formatRupiah(item.sub_price || item.price || 0, { decimals: 2 })}
                                             </td>
                                           </tr>
                                         ))}
@@ -274,7 +267,7 @@ export default function Records() {
                                       <tfoot className="border-t-2 border-[#E8F2EC]">
                                         <tr>
                                           <td colSpan={2} className="py-3 md:py-4 text-right text-[#7D8F85] font-bold text-[10px] md:text-xs uppercase tracking-widest">Total</td>
-                                          <td className="py-3 md:py-4 text-right font-bold text-[#0B1A13] text-sm md:text-base">{formatRupiah(Number(record.amount || 0))}</td>
+                                          <td className="py-3 md:py-4 text-right font-bold text-[#0B1A13] text-sm md:text-base">{formatRupiah(Number(record.amount || 0), { decimals: 2 })}</td>
                                         </tr>
                                       </tfoot>
                                     </table>

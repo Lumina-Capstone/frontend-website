@@ -2,18 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend 
+  LineChart, Line, Legend
 } from 'recharts';
+import { formatRupiah } from '../utils/formatRupiah';
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
-
-const formatRupiah = (value: number) => {
-  if (isNaN(value)) return 'Rp 0';
-  const isNegative = value < 0;
-  return `${isNegative ? '-' : ''}Rp ${Math.abs(value).toLocaleString('en-US')}`;
 };
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space';
