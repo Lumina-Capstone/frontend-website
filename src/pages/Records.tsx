@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
+import ConfirmDialog from '../components/ConfirmDialog';
+import Toast, { type ToastState } from '../components/Toast';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
@@ -13,7 +15,9 @@ export default function Records() {
 
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  const dismissToast = useCallback(() => setToast(null), []);
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -40,15 +44,6 @@ export default function Records() {
     fetchRecords();
   }, []);
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
   const confirmDelete = async () => {
     if (!recordToDelete) return;
     
@@ -66,7 +61,6 @@ export default function Records() {
       if (expandedId === recordToDelete) setExpandedId(null);
       
       setToast({ message: "Record successfully deleted.", type: 'success' });
-      
     } catch (error) {
       console.error("Delete error:", error);
       setToast({ message: "Failed to delete record. Please try again.", type: 'error' });
@@ -317,48 +311,20 @@ export default function Records() {
       </div>
 
       {recordToDelete && (
-        <div className="fixed inset-0 bg-[#0B1A13]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 md:p-8 shadow-2xl border border-[#E8F2EC] text-center">
-            <div className="w-14 h-14 md:w-16 md:h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5">
-              <span className="material-symbols-outlined text-2xl md:text-3xl text-red-500">warning</span>
-            </div>
-            <h3 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Delete Record?</h3>
-            <p className="text-[#4A5D52] text-xs md:text-sm mb-6 md:mb-8">This action cannot be undone. Are you sure you want to permanently remove this record from your ledger?</p>
-            
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setRecordToDelete(null)}
-                disabled={isDeleting}
-                className="flex-1 py-2.5 md:py-3 border border-[#E8F2EC] bg-white rounded-xl text-[#4A5D52] text-sm md:text-base font-bold hover:bg-[#FDFBF7] transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={confirmDelete}
-                disabled={isDeleting}
-                className="flex-1 py-2.5 md:py-3 bg-red-600 text-white rounded-xl text-sm md:text-base font-bold hover:bg-red-500 hover:shadow-lg hover:shadow-red-600/20 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <><span className="material-symbols-outlined animate-spin text-sm">autorenew</span> Deleting...</>
-                ) : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Delete Record?"
+          body="This action cannot be undone. Are you sure you want to permanently remove this record from your ledger?"
+          confirmLabel="Delete"
+          loadingLabel="Deleting..."
+          icon="warning"
+          tone="red"
+          loading={isDeleting}
+          onCancel={() => setRecordToDelete(null)}
+          onConfirm={confirmDelete}
+        />
       )}
 
-      {toast && (
-        <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:bottom-8 md:right-8 px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${
-          toast.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-            : 'bg-red-50 text-red-800 border-red-200'
-        }`}>
-          <span className="material-symbols-outlined text-lg md:text-xl">
-            {toast.type === 'success' ? 'check_circle' : 'error'}
-          </span>
-          <span className="font-bold text-xs md:text-sm">{toast.message}</span>
-        </div>
-      )}
+      <Toast toast={toast} onDismiss={dismissToast} />
 
     </div>
   );

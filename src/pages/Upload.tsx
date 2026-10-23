@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
+import Toast, { type ToastState } from '../components/Toast';
 
 const API_BASE_URL = 'https://agungibr-lumina-ml-capstone.hf.space/';
 
@@ -16,7 +17,9 @@ export default function Upload() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
 
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  const dismissToast = useCallback(() => setToast(null), []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -28,15 +31,6 @@ export default function Upload() {
 
   const [hasFlash, setHasFlash] = useState(false);
   const [isFlashOn, setIsFlashOn] = useState(false);
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
 
   useEffect(() => {
     return () => {
@@ -498,17 +492,7 @@ export default function Upload() {
 
       </div>
 
-      {toast && (
-        <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:bottom-8 md:right-8 px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-lg border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-50 ${toast.type === 'success'
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-            : 'bg-red-50 text-red-800 border-red-200'
-          }`}>
-          <span className="material-symbols-outlined text-lg md:text-xl">
-            {toast.type === 'success' ? 'check_circle' : 'error'}
-          </span>
-          <span className="font-bold text-xs md:text-sm">{toast.message}</span>
-        </div>
-      )}
+      <Toast toast={toast} onDismiss={dismissToast} />
 
     </div>
   );

@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { logout, getSession, clearSession, onAuthChange } from '../services/auth';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -177,34 +178,17 @@ export default function DashboardLayout() {
       </main>
       
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-[#0B1A13]/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 md:p-8 shadow-2xl border border-[#E8F2EC] text-center">
-            <div className="w-14 h-14 md:w-16 md:h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-5">
-              <span className="material-symbols-outlined text-2xl md:text-3xl text-orange-500">logout</span>
-            </div>
-            <h3 className="font-['Manrope',sans-serif] text-lg md:text-xl font-bold text-[#0B1A13] mb-2">Sign Out?</h3>
-            <p className="text-[#4A5D52] text-xs md:text-sm mb-6 md:mb-8">Are you sure you want to sign out of your account? You will need to log in again to access your ledger.</p>
-            
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setShowLogoutModal(false)}
-                disabled={isLoggingOut}
-                className="flex-1 py-2.5 md:py-3 border border-[#E8F2EC] bg-white rounded-xl text-[#4A5D52] text-sm md:text-base font-bold hover:bg-[#FDFBF7] transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex-1 py-2.5 md:py-3 bg-red-600 text-white rounded-xl text-sm md:text-base font-bold hover:bg-red-500 hover:shadow-lg hover:shadow-red-600/20 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
-              >
-                {isLoggingOut ? (
-                  <><span className="material-symbols-outlined animate-spin text-sm">autorenew</span> Signing out...</>
-                ) : 'Sign Out'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Sign Out?"
+          body="Are you sure you want to sign out of your account? You will need to log in again to access your ledger."
+          confirmLabel="Sign Out"
+          loadingLabel="Signing out..."
+          icon="logout"
+          tone="orange"
+          loading={isLoggingOut}
+          onCancel={() => setShowLogoutModal(false)}
+          onConfirm={handleLogout}
+        />
       )}
 
     </div>
