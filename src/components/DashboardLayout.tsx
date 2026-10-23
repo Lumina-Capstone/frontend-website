@@ -14,13 +14,13 @@ export default function DashboardLayout() {
   useEffect(() => {
     const session = getSession();
     if (!session?.email) {
-      navigate('/login');
+      navigate('/signin');
     }
 
     const unsubscribe = onAuthChange((user) => {
       if (!user) {
         clearSession();
-        navigate('/login');
+        navigate('/signin');
       }
     });
     return () => unsubscribe();
@@ -31,7 +31,7 @@ export default function DashboardLayout() {
     try {
       await logout();
       clearSession();
-      navigate('/login');
+      navigate('/signin');
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
