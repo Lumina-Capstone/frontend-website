@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { signInWithEmail, signInWithGoogle, setSession } from '../services/auth';
+import { getAuthErrorMessage } from '../utils/authErrors';
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -21,14 +22,8 @@ export default function SignIn() {
       const user = await signInWithEmail(email, password);
       setSession(user);
       navigate('/dashboard');
-    } catch (err: any) {
-      let message = err.message;
-      if (message.includes('auth/user-not-found')) message = 'Email tidak ditemukan.';
-      else if (message.includes('auth/wrong-password')) message = 'Password salah.';
-      else if (message.includes('auth/invalid-email')) message = 'Email tidak valid.';
-      else if (message.includes('auth/too-many-requests')) message = 'Terlalu banyak percobaan. Coba lagi nanti.';
-      else message = 'Login gagal. Periksa email dan password.';
-      setError(message);
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'signin'));
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +36,8 @@ export default function SignIn() {
       const user = await signInWithGoogle();
       setSession(user);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Google sign-in failed.');
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'signin'));
     } finally {
       setIsLoading(false);
     }

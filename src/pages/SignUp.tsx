@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { signUpWithEmail, signInWithGoogle, setSession } from '../services/auth';
+import { getAuthErrorMessage } from '../utils/authErrors';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -68,12 +69,8 @@ export default function SignUp() {
     try {
       await signUpWithEmail(email, password);
       navigate('/login');
-    } catch (err: any) {
-      let message = err.message;
-      if (message.includes('auth/email-already-in-use')) message = 'Email sudah terdaftar. Silakan login.';
-      else if (message.includes('auth/weak-password')) message = 'Password terlalu lemah. Minimal 6 karakter.';
-      else message = 'Pendaftaran gagal. Coba lagi.';
-      setErrors({ general: message });
+    } catch (err) {
+      setErrors({ general: getAuthErrorMessage(err, 'signup') });
     } finally {
       setIsLoading(false);
     }
@@ -86,8 +83,8 @@ export default function SignUp() {
       const user = await signInWithGoogle();
       setSession(user);
       navigate('/login');
-    } catch (err: any) {
-      setErrors({ general: err.message || 'Google sign-up failed.' });
+    } catch (err) {
+      setErrors({ general: getAuthErrorMessage(err, 'signup') });
     } finally {
       setIsLoading(false);
     }

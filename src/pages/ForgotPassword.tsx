@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { resetPassword } from '../services/auth'; 
+import { resetPassword } from '../services/auth';
+import { getAuthErrorMessage } from '../utils/authErrors';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -21,11 +22,8 @@ export default function ForgotPassword() {
     try {
       await resetPassword(email);
       setIsSent(true);
-    } catch (err: any) {
-      let message = err.message;
-      if (message.includes('auth/user-not-found')) message = 'No account found with this email.';
-      else message = 'Failed to send reset email. Please try again.';
-      setError(message);
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'reset'));
     } finally {
       setIsLoading(false);
     }
