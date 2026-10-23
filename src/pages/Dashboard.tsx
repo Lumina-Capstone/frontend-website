@@ -12,6 +12,28 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+async function fetchAllRecords(): Promise<any[]> {
+  const limit = 500;
+  let offset = 0;
+  const all: any[] = [];
+
+  while (offset < 20000) {
+    const response = await apiFetch(`/records/?limit=${limit}&offset=${offset}`);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    const batch = Array.isArray(data.records)
+      ? data.records
+      : Array.isArray(data)
+        ? data
+        : [];
+    all.push(...batch);
+    if (!data.has_more || batch.length === 0) break;
+    offset += limit;
+  }
+
+  return all;
+}
+
 export default function Dashboard() {
   const [productions, setProductions] = useState<any[]>([]);
   const [financialRecords, setFinancialRecords] = useState<any[]>([]);
@@ -25,11 +47,13 @@ export default function Dashboard() {
   const fetchProductions = useCallback(async (showSpinner = true) => {
     if (showSpinner) setIsLoading(true);
     try {
-      const response = await apiFetch('/produksi');
+      const response = await apiFetch('/production');
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       
-      if (data && Array.isArray(data.produksis)) {
+      if (data && Array.isArray(data.productions)) {
+        setProductions(data.productions);
+      } else if (data && Array.isArray(data.produksis)) {
         setProductions(data.produksis);
       } else if (Array.isArray(data)) {
         setProductions(data);
@@ -46,17 +70,7 @@ export default function Dashboard() {
 
   const fetchFinancials = useCallback(async () => {
     try {
-      const response = await apiFetch('/records/');
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
-      
-      if (data && Array.isArray(data.records)) {
-        setFinancialRecords(data.records);
-      } else if (Array.isArray(data)) {
-        setFinancialRecords(data);
-      } else {
-        setFinancialRecords([]);
-      }
+      setFinancialRecords(await fetchAllRecords());
     } catch (error) {
       console.error("Failed to fetch financials:", error);
       setFinancialRecords([]);
@@ -129,20 +143,23 @@ export default function Dashboard() {
     const newRecord = { date: newDate, count: parseInt(newCount) };
 
     try {
-      const response = await apiFetch(`/produksi`, {
+      const response = await apiFetch(`/production`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord),
       });
 
-      if (!response.ok) throw new Error('Failed to save record');
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.detail || 'Failed to save record');
+      }
       await fetchProductions(false); 
       setNewCount('');
       setNewDate(new Date().toISOString().slice(0, 10)); 
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error saving record:", error);
-      alert("Failed to save to backend.");
+      alert(error instanceof Error ? error.message : "Failed to save to backend.");
     } finally {
       setSubmitting(false);
     }

@@ -67,7 +67,7 @@ src/
     ForgotPassword.tsx     Password reset email
     Dashboard.tsx          Production/finance charts
     Upload.tsx             Receipt upload, extraction, review, save
-    Records.tsx            Saved records list (edit/delete)
+    Records.tsx            Saved records (paginated list, search, delete)
     Settings.tsx           Account settings
   components/              DashboardLayout, Toast, ConfirmDialog
   services/

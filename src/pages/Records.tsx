@@ -5,11 +5,17 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import Toast, { type ToastState } from '../components/Toast';
 import { apiFetch } from '../services/apiClient';
 
+const PAGE_SIZE = 10;
+
 export default function Records() {
   const [records, setRecords] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
@@ -18,30 +24,43 @@ export default function Records() {
 
   const dismissToast = useCallback(() => setToast(null), []);
 
-  useEffect(() => {
-    const fetchRecords = async () => {
-      try {
-        const response = await apiFetch('/records/'); 
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        
-        if (data && Array.isArray(data.records)) {
-          setRecords(data.records);
-        } else if (Array.isArray(data)) {
-          setRecords(data);
-        } else {
-          setRecords([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch from backend:", error);
-        setRecords([]); 
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadRecords = useCallback(async () => {
+    setIsFetching(true);
+    try {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(page * PAGE_SIZE),
+      });
+      if (activeTab !== 'All') params.set('category', activeTab);
+      if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim());
 
-    fetchRecords();
-  }, []);
+      const response = await apiFetch(`/records/?${params.toString()}`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+
+      setRecords(Array.isArray(data.records) ? data.records : []);
+      setTotal(Number(data.total) || 0);
+    } catch (error) {
+      console.error("Failed to fetch from backend:", error);
+      setRecords([]);
+      setTotal(0);
+    } finally {
+      setIsFetching(false);
+      setIsLoading(false);
+    }
+  }, [activeTab, debouncedSearch, page]);
+
+  useEffect(() => {
+    loadRecords();
+  }, [loadRecords]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const confirmDelete = async () => {
     if (!recordToDelete) return;
@@ -56,8 +75,12 @@ export default function Records() {
         throw new Error('Failed to delete record');
       }
 
-      setRecords((prevRecords) => prevRecords.filter((record) => record.id !== recordToDelete));
       if (expandedId === recordToDelete) setExpandedId(null);
+      if (records.length === 1 && page > 0) {
+        setPage(page - 1);
+      } else {
+        await loadRecords();
+      }
       
       setToast({ message: "Record successfully deleted.", type: 'success' });
     } catch (error) {
@@ -69,12 +92,7 @@ export default function Records() {
     }
   };
 
-  const filteredRecords = records.filter(record => {
-    const matchesTab = activeTab === 'All' || record.category === activeTab;
-    const itemName = record.itemName || ''; 
-    const matchesSearch = itemName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'N/A';
@@ -110,6 +128,7 @@ export default function Records() {
                 type="text"
                 placeholder="Search items..."
                 value={searchQuery}
+                maxLength={100}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full sm:w-64 bg-white border border-[#E8F2EC] rounded-xl py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-[#0B1A13] placeholder:text-[#7D8F85] shadow-[0_2px_10px_rgb(0,0,0,0.02)]"
               />
@@ -129,7 +148,10 @@ export default function Records() {
           {['All', 'Income', 'Expense'].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => {
+                setActiveTab(tab as any);
+                setPage(0);
+              }}
               className={`px-5 py-2.5 text-sm font-bold rounded-t-xl transition-colors relative whitespace-nowrap ${
                 activeTab === tab 
                   ? 'text-emerald-600 bg-white border-t border-l border-r border-[#E8F2EC]' 
@@ -158,8 +180,8 @@ export default function Records() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8F2EC]">
-                {filteredRecords.length > 0 ? (
-                  filteredRecords.map((record, index) => (
+                {records.length > 0 ? (
+                  records.map((record, index) => (
                     <React.Fragment key={record.id || index}>
                       <tr 
                         onClick={() => toggleExpand(record.id)}
@@ -293,6 +315,34 @@ export default function Records() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 border-t border-[#E8F2EC] bg-[#FDFBF7]/40">
+            <p className="text-xs text-[#7D8F85] font-medium">
+              {total === 0
+                ? 'No records'
+                : `Showing ${page * PAGE_SIZE + 1}-${Math.min((page + 1) * PAGE_SIZE, total)} of ${total}`}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+                disabled={page === 0 || isFetching}
+                className="px-4 py-2 text-xs font-bold rounded-lg border border-[#E8F2EC] bg-white text-[#0B1A13] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FDFBF7] transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-xs text-[#7D8F85] font-bold whitespace-nowrap">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
+                disabled={page + 1 >= totalPages || isFetching}
+                className="px-4 py-2 text-xs font-bold rounded-lg border border-[#E8F2EC] bg-white text-[#0B1A13] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FDFBF7] transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </section>
 
