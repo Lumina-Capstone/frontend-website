@@ -12,10 +12,12 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-async function fetchAllRecords(): Promise<any[]> {
+type RecordRow = Record<string, unknown>;
+
+async function fetchAllRecords(): Promise<RecordRow[]> {
   const limit = 500;
   let offset = 0;
-  const all: any[] = [];
+  const all: RecordRow[] = [];
 
   while (offset < 20000) {
     const response = await apiFetch(`/records/?limit=${limit}&offset=${offset}`);

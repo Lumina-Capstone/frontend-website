@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { formatRupiah } from '../utils/formatRupiah';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -7,10 +7,29 @@ import { apiFetch } from '../services/apiClient';
 
 const PAGE_SIZE = 10;
 
+async function fetchRecordsPage(page: number, category: string, search: string) {
+  const params = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+    offset: String(page * PAGE_SIZE),
+  });
+  if (category !== 'All') params.set('category', category);
+  if (search.trim()) params.set('q', search.trim());
+
+  const response = await apiFetch(`/records/?${params.toString()}`);
+  if (!response.ok) throw new Error('Network response was not ok');
+  const data = await response.json();
+
+  return {
+    records: Array.isArray(data.records) ? data.records : [],
+    total: Number(data.total) || 0,
+  };
+}
+
 export default function Records() {
   const [records, setRecords] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
@@ -23,39 +42,41 @@ export default function Records() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const dismissToast = useCallback(() => setToast(null), []);
-
-  const loadRecords = useCallback(async () => {
-    setIsFetching(true);
-    try {
-      const params = new URLSearchParams({
-        limit: String(PAGE_SIZE),
-        offset: String(page * PAGE_SIZE),
-      });
-      if (activeTab !== 'All') params.set('category', activeTab);
-      if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim());
-
-      const response = await apiFetch(`/records/?${params.toString()}`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
-
-      setRecords(Array.isArray(data.records) ? data.records : []);
-      setTotal(Number(data.total) || 0);
-    } catch (error) {
-      console.error("Failed to fetch from backend:", error);
-      setRecords([]);
-      setTotal(0);
-    } finally {
-      setIsFetching(false);
-      setIsLoading(false);
-    }
-  }, [activeTab, debouncedSearch, page]);
+  const lastSearch = useRef('');
 
   useEffect(() => {
-    loadRecords();
-  }, [loadRecords]);
+    let cancelled = false;
+
+    const fetchPage = async () => {
+      try {
+        const data = await fetchRecordsPage(page, activeTab, debouncedSearch);
+        if (cancelled) return;
+        setRecords(data.records);
+        setTotal(data.total);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to fetch from backend:", error);
+        setRecords([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) {
+          setIsFetching(false);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchPage();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, debouncedSearch, page, reloadKey]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (lastSearch.current === searchQuery) return;
+      lastSearch.current = searchQuery;
+      setIsFetching(true);
       setDebouncedSearch(searchQuery);
       setPage(0);
     }, 300);
@@ -76,10 +97,11 @@ export default function Records() {
       }
 
       if (expandedId === recordToDelete) setExpandedId(null);
+      setIsFetching(true);
       if (records.length === 1 && page > 0) {
         setPage(page - 1);
       } else {
-        await loadRecords();
+        setReloadKey((key) => key + 1);
       }
       
       setToast({ message: "Record successfully deleted.", type: 'success' });
@@ -149,6 +171,8 @@ export default function Records() {
             <button
               key={tab}
               onClick={() => {
+                if (tab === activeTab && page === 0) return;
+                setIsFetching(true);
                 setActiveTab(tab as any);
                 setPage(0);
               }}
@@ -325,7 +349,11 @@ export default function Records() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setPage((current) => Math.max(0, current - 1))}
+                onClick={() => {
+                  if (page === 0) return;
+                  setIsFetching(true);
+                  setPage((current) => Math.max(0, current - 1));
+                }}
                 disabled={page === 0 || isFetching}
                 className="px-4 py-2 text-xs font-bold rounded-lg border border-[#E8F2EC] bg-white text-[#0B1A13] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FDFBF7] transition-colors"
               >
@@ -336,7 +364,11 @@ export default function Records() {
               </span>
               <button
                 type="button"
-                onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
+                onClick={() => {
+                  if (page + 1 >= totalPages) return;
+                  setIsFetching(true);
+                  setPage((current) => Math.min(totalPages - 1, current + 1));
+                }}
                 disabled={page + 1 >= totalPages || isFetching}
                 className="px-4 py-2 text-xs font-bold rounded-lg border border-[#E8F2EC] bg-white text-[#0B1A13] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FDFBF7] transition-colors"
               >
