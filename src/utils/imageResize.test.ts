@@ -71,4 +71,48 @@ describe('prepareReceiptImage', () => {
 
     await expect(prepareReceiptImage(file)).resolves.toBe(file);
   });
+
+  it('still returns the original under force when decoding is unavailable', async () => {
+    globalThis.createImageBitmap = undefined as unknown as typeof createImageBitmap;
+    const file = new File([new Uint8Array(10)], 'receipt.jpg', { type: 'image/jpeg' });
+
+    await expect(prepareReceiptImage(file, { force: true })).resolves.toBe(file);
+  });
+});
+
+describe('prepareReceiptImage force mode', () => {
+  const originalCreateImageBitmap = globalThis.createImageBitmap;
+  const originalCreateElement = document.createElement.bind(document);
+
+  afterEach(() => {
+    globalThis.createImageBitmap = originalCreateImageBitmap;
+    document.createElement = originalCreateElement;
+  });
+
+  it('re-encodes an already-small file when forced', async () => {
+    globalThis.createImageBitmap = (() =>
+      Promise.resolve({ width: 1200, height: 900, close: () => {} })) as typeof createImageBitmap;
+
+    const fakeCanvas = {
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: () => {} }),
+      toBlob: (cb: (b: Blob) => void) =>
+        cb(new Blob(['x'.repeat(5000)], { type: 'image/jpeg' })),
+    };
+    document.createElement = ((tagName: string) =>
+      tagName === 'canvas'
+        ? (fakeCanvas as unknown as HTMLElement)
+        : originalCreateElement(tagName)) as typeof document.createElement;
+
+    const file = new File([new Uint8Array(10)], 'nota.png', { type: 'image/png' });
+
+    const withoutForce = await prepareReceiptImage(file);
+    expect(withoutForce).toBe(file);
+
+    const withForce = await prepareReceiptImage(file, { force: true });
+    expect(withForce).not.toBe(file);
+    expect(withForce.name).toBe('nota.jpg');
+    expect(withForce.type).toBe('image/jpeg');
+  });
 });

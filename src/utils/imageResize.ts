@@ -48,19 +48,24 @@ function encodeJpeg(bitmap: ImageBitmap, width: number, height: number): Promise
   });
 }
 
-export async function prepareReceiptImage(file: File): Promise<File> {
+export async function prepareReceiptImage(
+  file: File,
+  options: { force?: boolean } = {},
+): Promise<File> {
+  const force = options.force ?? false;
   try {
     if (typeof globalThis.createImageBitmap !== 'function') return file;
 
     const bitmap = await globalThis.createImageBitmap(file, { imageOrientation: 'from-image' });
     try {
-      if (!needsResize(bitmap.width, bitmap.height, file.size)) return file;
+      if (!force && !needsResize(bitmap.width, bitmap.height, file.size)) return file;
 
       const target = computeScaledDimensions(bitmap.width, bitmap.height, MAX_UPLOAD_DIMENSION);
       if (!target) return file;
 
       const blob = await encodeJpeg(bitmap, target.width, target.height);
-      if (!blob || blob.size >= file.size) return file;
+      if (!blob) return file;
+      if (!force && blob.size >= file.size) return file;
 
       const baseName = file.name.replace(/\.[^./\\]+$/, '') || 'receipt';
       return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });

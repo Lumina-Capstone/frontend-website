@@ -4,6 +4,11 @@ import { formatRupiah } from '../utils/formatRupiah';
 import Toast, { type ToastState } from '../components/Toast';
 import { editItem, removeItem, type LineItem } from '../utils/lineItems';
 import { prepareReceiptImage } from '../utils/imageResize';
+import {
+  cameraVideoConstraints,
+  captureReceiptPhoto,
+  tuneCameraTrack,
+} from '../utils/cameraCapture';
 import { apiFetch } from '../services/apiClient';
 
 export default function Upload() {
@@ -32,6 +37,7 @@ export default function Upload() {
 
   const [hasFlash, setHasFlash] = useState(false);
   const [isFlashOn, setIsFlashOn] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -43,7 +49,7 @@ export default function Upload() {
     setIsCameraMode(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: cameraVideoConstraints(),
         audio: false
       });
       streamRef.current = stream;
@@ -52,6 +58,7 @@ export default function Upload() {
       }
 
       const videoTrack = stream.getVideoTracks()[0];
+      await tuneCameraTrack(videoTrack);
       const capabilities = videoTrack.getCapabilities?.();
       if (capabilities && ('torch' in capabilities)) {
         setHasFlash(true);
@@ -91,24 +98,29 @@ export default function Upload() {
     }
   };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
+  const handleCapture = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const stream = streamRef.current;
+    if (isCapturing || !video || !canvas || !stream) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const capturedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
-          handleFileSelect(capturedFile);
-          stopCamera();
-        }
-      }, 'image/jpeg', 0.9);
+    setIsCapturing(true);
+    try {
+      const captured = await captureReceiptPhoto(video, canvas, stream);
+      if (!captured) {
+        setToast({ message: 'Could not capture the photo. Please try again.', type: 'error' });
+        return;
+      }
+      handleFileSelect(captured.file);
+      stopCamera();
+      if (captured.lowRes) {
+        setToast({
+          message: 'Camera returned a low-resolution frame, so OCR may be less accurate. Add more light or upload a photo file instead.',
+          type: 'error',
+        });
+      }
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -420,10 +432,15 @@ export default function Upload() {
                       Cancel
                     </button>
                     <button
-                      onClick={capturePhoto}
-                      className="flex-[2] bg-emerald-600 text-white py-3.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-500 transition-all shadow-sm"
+                      onClick={handleCapture}
+                      disabled={isCapturing}
+                      className="flex-[2] bg-emerald-600 text-white py-3.5 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-500 transition-all shadow-sm disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-lg">photo_camera</span> Capture Receipt
+                      {isCapturing ? (
+                        <><span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Capturing...</>
+                      ) : (
+                        <><span className="material-symbols-outlined text-lg">photo_camera</span> Capture Receipt</>
+                      )}
                     </button>
                   </div>
                 </div>
